@@ -1,0 +1,7 @@
+{
+  "appId": "com.migato.app",
+  "appName": "Mi Gato",
+  "webDir": "www",
+  "backgroundColor": "#fdeee9",
+  "server": { "androidScheme": "https" }
+}

@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="peach" data-cat="yuyi" data-bed="rosa" data-deco="planta" data-mueble="cama" data-piso="madera">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Gato</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --bg: #fdeee9;
+    --card: #fff6f3;
+    --ink: #5a3a37;
+    --mute: #9a7570;
+    --ac: #f27d84;
+    --on: #ffffff;
+    --trk: #f9ddd6;
+    --bd: #f1c5bd;
+    --sel: #fbd5cf;
+    --glow: #ffd9d2;
+    --cush: #f7a8b0;
+    --tint: #ffd9d4;
+    --top: 0.55;
+    --blend: multiply;
+    --floor1: #e7c8a9;
+    --floor2: #d4b08c;
+    --win-sky: #cfe6f3;
+    --win-frame: #d8a982;
+    --bowl: #7cc2e8;
+    --bowl-dark: #5aa3cc;
+    --kibble: #c97e48;
+  }
+  [data-theme="noche"] {
+    --bg: #1c222e;
+    --card: #283040;
+    --ink: #f6ebdd;
+    --mute: #a9b0c0;
+    --ac: #f7a23b;
+    --on: #2a1c08;
+    --trk: #313b4e;
+    --bd: #3b465a;
+    --sel: #4a3a24;
+    --glow: #3a3326;
+    --tint: #283347;
+    --top: 0.7;
+    --blend: screen;
+    --floor1: #343f54;
+    --floor2: #273042;
+    --win-sky: #253659;
+    --win-frame: #8f6b4a;
+  }
+  [data-theme="bosque"] {
+    --bg: #f6efe0;
+    --card: #fbf7ea;
+    --ink: #3b3a2c;
+    --mute: #7b775f;
+    --ac: #587a4f;
+    --on: #ffffff;
+    --trk: #ddd6c3;
+    --bd: #d6cdb4;
+    --sel: #dcd7bd;
+    --glow: #e3ead2;
+    --tint: #dfe8c9;
+    --top: 0.6;
+    --blend: multiply;
+    --floor1: #d5cbb2;
+    --floor2: #c2b699;
+    --win-sky: #d6eadf;
+    --win-frame: #9c8265;
+  }
+  [data-theme="luna"] {
+    --bg: #23192d;
+    --card: #312440;
+    --ink: #fde9f1;
+    --mute: #c3a9cc;
+    --ac: #f27ca6;
+    --on: #2d1122;
+    --trk: #443257;
+    --bd: #543e6b;
+    --sel: #5c3b66;
+    --glow: #46305e;
+    --tint: #46335c;
+    --top: 0.7;
+    --blend: screen;
+    --floor1: #3d2d4f;
+    --floor2: #2d203b;
+    --win-sky: #324670;
+    --win-frame: #a67c52;
+  }
+
+  /* Colores de camas / almohadones */
+  [data-bed="rosa"] { --cush: #f7a8b0; }
+  [data-bed="naranja"] { --cush: #e07b39; }
+  [data-bed="oliva"] { --cush: #7f8461; }
+  [data-bed="lila"] { --cush: #c982cf; }
+  [data-bed="celeste"] { --cush: #7cc2e8; }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+  }
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fredoka', system-ui, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    transition: background 0.3s, color 0.3s;
+  }
+  main {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 14px 16px 104px;
+  }
+  .tab {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tab.on {
+    display: flex;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0;
+    font-weight: 600;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ic svg {
+    width: 1.25em;
+    height: 1.25em;
+  }
+  .ic svg.l {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .ib {
+    background: var(--card);
+    border: 2px solid var(--bd);
+    color: var(--ink);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ib:active {
+    background: var(--sel);
+  }
+  .ib.muted {
+    color: var(--mute);
+    opacity: 0.75;
+  }
+
+  /* Escena principal y Hogar */
+  .scene {
+    position: relative;
+    background: radial-gradient(circle at 50% 55%, var(--glow), transparent 72%);
+    text-align: center;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 2px solid var(--bd);
+  }
+  .scene svg {
+    width: 100%;
+    max-width: 390px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    user-select: none;
+  }
+  #catbox svg {
+    cursor: pointer;
+  }
+
+  /* Selector discreto de estados de animación */
+  .anim-bar {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 8px;
+    background: rgba(128, 100, 100, 0.08);
+    border-top: 1.5px solid var(--bd);
+    flex-wrap: wrap;
+  }
+  .anim-bar button {
+    background: var(--card);
+    border: 1.5px solid var(--bd);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--mute);
+  }
+  .anim-bar button.on {
+    background: var(--ac);
+    border-color: var(--ac);
+    color: var(--on);
+  }
+
+  /* ==========================================================================
+     PERSONAJE SVG 2D ARTICULADO (8 GRUPOS INDEPENDIENTES)
+     ========================================================================== */
+  .cat-svg .rig-part,
+  .cat-svg .rig-plato {
+    transition: transform 0.42s cubic-bezier(0.34, 1.35, 0.64, 1), opacity 0.3s ease;
+  }
+  .cat-svg .rig-sombra { transform-box: fill-box; transform-origin: 50% 50%; }
+  .cat-svg .rig-root { transform-box: fill-box; transform-origin: 50% 90%; }
+  .cat-svg .rig-cola { transform-box: fill-box; transform-origin: 85% 85%; }
+  .cat-svg .rig-cuerpo { transform-box: fill-box; transform-origin: 50% 85%; }
+  .cat-svg .rig-cabeza { transform-box: fill-box; transform-origin: 48% 72%; }
+  .cat-svg .rig-orejas { transform-box: fill-box; transform-origin: 50% 100%; }
+  .cat-svg .rig-oreja-i { transform-box: fill-box; transform-origin: 70% 90%; }
+  .cat-svg .rig-oreja-d { transform-box: fill-box; transform-origin: 30% 90%; }
+  .cat-svg .rig-ojos { transform-box: fill-box; transform-origin: 50% 50%; }
+  .cat-svg .rig-boca { transform-box: fill-box; transform-origin: 50% 25%; }
+  .cat-svg .rig-pata { transform-box: fill-box; transform-origin: 50% 14%; }
+
+  /* Patitas en reposo vs 4 patas cortas al caminar */
+  .cat-svg .paws-rest { opacity: 1; transition: opacity 0.25s ease; }
+  .cat-svg .paws-walk { opacity: 0; transition: opacity 0.25s ease; }
+  .cat-svg[data-state="caminar"] .paws-rest { opacity: 0; }
+  .cat-svg[data-state="caminar"] .paws-walk { opacity: 1; }
+
+  /* Rayitas de velocidad detrás del gatito al caminar */
+  .cat-svg .speed-lines { opacity: 0; transition: opacity 0.25s ease; }
+  .cat-svg[data-state="caminar"] .speed-lines {
+    opacity: 1;
+    animation: speed-pulse 0.55s ease-in-out infinite alternate;
+  }
+  @keyframes speed-pulse {
+    0% { transform: translateX(0px); opacity: 0.45; }
+    100% { transform: translateX(-5px); opacity: 0.95; }
+  }
+
+  /* Expresiones oculares y bucales */
+  .cat-svg .eye-open { opacity: 1; transition: opacity 0.2s ease, transform 0.12s ease; }
+  .cat-svg .eye-sleep, .cat-svg .eye-happy { opacity: 0; transition: opacity 0.22s ease; }
+  .cat-svg .mouth-normal { opacity: 1; transition: opacity 0.2s ease; }
+  .cat-svg .mouth-happy, .cat-svg .mouth-eat { opacity: 0; transition: opacity 0.2s ease; }
+
+  .cat-svg .rig-ojos.blink .eye-open {
+    transform-box: fill-box;
+    transform-origin: 50% 55%;
+    transform: scaleY(0.08);
+  }
+
+  /* 1. IDLE */
+  .cat-svg[data-state="idle"] .rig-cuerpo { animation: idle-breathe-body 3.4s ease-in-out infinite; }
+  .cat-svg[data-state="idle"] .rig-cabeza { animation: idle-breathe-head 3.4s ease-in-out infinite; }
+  .cat-svg[data-state="idle"] .rig-cola { animation: idle-tail 3.2s ease-in-out infinite alternate; }
+  .cat-svg[data-state="idle"] .rig-orejas { animation: idle-ears 6.8s ease-in-out infinite; }
+  @keyframes idle-breathe-body {
+    0%, 100% { transform: scale(1, 1); }
+    50% { transform: scale(1.015, 1.036); }
+  }
+  @keyframes idle-breathe-head {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2.2px); }
+  }
+  @keyframes idle-tail {
+    0% { transform: rotate(-2deg); }
+    100% { transform: rotate(8deg); }
+  }
+  @keyframes idle-ears {
+    0%, 90%, 100% { transform: none; }
+    93% { transform: rotate(-4deg); }
+    96% { transform: rotate(3deg); }
+  }
+
+  /* 2. CAMINAR */
+  .cat-svg[data-state="caminar"] .eye-open { opacity: 0; }
+  .cat-svg[data-state="caminar"] .eye-happy { opacity: 1; }
+  .cat-svg[data-state="caminar"] .rig-root {
+    transform: translateY(-19px);
+    animation: walk-bob 0.42s ease-in-out infinite alternate;
+  }
+  .cat-svg[data-state="caminar"] .rig-sombra { animation: walk-shadow 0.42s ease-in-out infinite alternate; }
+  .cat-svg[data-state="caminar"] .rig-cuerpo { animation: walk-body-sway 0.84s ease-in-out infinite alternate; }
+  .cat-svg[data-state="caminar"] .rig-cabeza { animation: walk-head-nod 0.42s ease-in-out infinite alternate; }
+  .cat-svg[data-state="caminar"] .rig-cola { animation: walk-tail 0.84s ease-in-out infinite alternate; }
+  .cat-svg[data-state="caminar"] .pata-di,
+  .cat-svg[data-state="caminar"] .pata-td { animation: walk-step-a 0.84s ease-in-out infinite; }
+  .cat-svg[data-state="caminar"] .pata-dd,
+  .cat-svg[data-state="caminar"] .pata-ti { animation: walk-step-b 0.84s ease-in-out infinite; }
+  @keyframes walk-bob {
+    0% { transform: translateY(-18px); }
+    100% { transform: translateY(-22px); }
+  }
+  @keyframes walk-shadow {
+    0% { transform: scaleX(0.95); opacity: 0.25; }
+    100% { transform: scaleX(0.86); opacity: 0.16; }
+  }
+  @keyframes walk-body-sway {
+    0% { transform: rotate(-1.5deg); }
+    100% { transform: rotate(1.5deg); }
+  }
+  @keyframes walk-head-nod {
+    0% { transform: translateY(0px) rotate(-1.4deg); }
+    100% { transform: translateY(-1.8px) rotate(1.4deg); }
+  }
+  @keyframes walk-tail {
+    0% { transform: rotate(10deg); }
+    100% { transform: rotate(24deg); }
+  }
+  @keyframes walk-step-a {
+    0%, 100% { transform: rotate(-24deg) translateY(-1px); }
+    50% { transform: rotate(24deg) translateY(0px); }
+  }
+  @keyframes walk-step-b {
+    0%, 100% { transform: rotate(24deg) translateY(0px); }
+    50% { transform: rotate(-24deg) translateY(-1px); }
+  }
+
+  /* 3. DORMIR */
+  .cat-svg[data-state="dormir"] .eye-open { opacity: 0; }
+  .cat-svg[data-state="dormir"] .eye-sleep { opacity: 1; }
+  .cat-svg[data-state="dormir"] .rig-root { transform: translateY(2px); }
+  .cat-svg[data-state="dormir"] .rig-cuerpo { animation: sleep-breathe 4s ease-in-out infinite; }
+  .cat-svg[data-state="dormir"] .rig-cabeza { animation: sleep-head 4s ease-in-out infinite; }
+  .cat-svg[data-state="dormir"] .rig-cola { animation: sleep-tail 4.4s ease-in-out infinite alternate; }
+  .cat-svg .zzz-group { opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .cat-svg[data-state="dormir"] .zzz-group { opacity: 1; }
+  .cat-svg[data-state="dormir"] .z1 { animation: float-z 3.4s ease-out infinite; }
+  .cat-svg[data-state="dormir"] .z2 { animation: float-z 3.4s ease-out 1.1s infinite; }
+  .cat-svg[data-state="dormir"] .z3 { animation: float-z 3.4s ease-out 2.2s infinite; }
+  @keyframes sleep-breathe {
+    0%, 100% { transform: scale(1.01, 0.98); }
+    50% { transform: scale(1.03, 1.035); }
+  }
+  @keyframes sleep-head {
+    0%, 100% { transform: translate(1px, 3px) rotate(2.5deg); }
+    50% { transform: translate(1px, 1px) rotate(1.5deg); }
+  }
+  @keyframes sleep-tail {
+    0% { transform: rotate(-4deg); }
+    100% { transform: rotate(3deg); }
+  }
+  @keyframes float-z {
+    0% { opacity: 0; transform: translate(0, 6px) scale(0.85); }
+    30% { opacity: 0.9; }
+    100% { opacity: 0; transform: translate(10px, -22px) scale(1.1); }
+  }
+
+  /* 4. FELIZ */
+  .cat-svg[data-state="feliz"] .eye-open { opacity: 0; }
+  .cat-svg[data-state="feliz"] .eye-happy { opacity: 1; }
+  .cat-svg[data-state="feliz"] .mouth-normal { opacity: 0; }
+  .cat-svg[data-state="feliz"] .mouth-happy { opacity: 1; }
+  .cat-svg[data-state="feliz"] .rig-root { animation: happy-bounce 0.65s cubic-bezier(0.36, 1.45, 0.54, 1) infinite; }
+  .cat-svg[data-state="feliz"] .rig-sombra { animation: happy-shadow 0.65s ease-in-out infinite; }
+  .cat-svg[data-state="feliz"] .rig-cabeza { animation: happy-tilt 1.3s ease-in-out infinite alternate; }
+  .cat-svg[data-state="feliz"] .rig-cola { animation: happy-tail 0.45s ease-in-out infinite alternate; }
+  .cat-svg[data-state="feliz"] .rig-oreja-i { animation: happy-ear-l 0.65s ease-in-out infinite alternate; }
+  .cat-svg[data-state="feliz"] .rig-oreja-d { animation: happy-ear-r 0.65s ease-in-out infinite alternate; }
+  @keyframes happy-bounce {
+    0%, 100% { transform: translateY(0px) scale(1.02, 0.97); }
+    45% { transform: translateY(-11px) scale(0.98, 1.03); }
+  }
+  @keyframes happy-shadow {
+    0%, 100% { transform: scaleX(1.04); opacity: 0.25; }
+    45% { transform: scaleX(0.82); opacity: 0.14; }
+  }
+  @keyframes happy-tilt {
+    0% { transform: rotate(-4deg); }
+    100% { transform: rotate(4deg); }
+  }
+  @keyframes happy-tail {
+    0% { transform: rotate(-10deg); }
+    100% { transform: rotate(15deg); }
+  }
+  @keyframes happy-ear-l {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-7deg); }
+  }
+  @keyframes happy-ear-r {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(7deg); }
+  }
+
+  /* 5. COMER */
+  .cat-svg .rig-plato {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    pointer-events: none;
+  }
+  .cat-svg[data-state="comer"] .rig-plato {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+  .cat-svg[data-state="comer"] .mouth-normal { opacity: 0; }
+  .cat-svg[data-state="comer"] .mouth-eat { opacity: 1; }
+  .cat-svg[data-state="comer"] .rig-cuerpo { transform: translate(3px, 2px) rotate(3deg); }
+  .cat-svg[data-state="comer"] .rig-cabeza { animation: eat-head 0.55s ease-in-out infinite alternate; }
+  .cat-svg[data-state="comer"] .rig-boca { animation: eat-chew 0.28s ease-in-out infinite alternate; }
+  .cat-svg[data-state="comer"] .rig-cola { animation: eat-tail 0.75s ease-in-out infinite alternate; }
+  @keyframes eat-head {
+    0% { transform: translate(11px, 28px) rotate(18deg); }
+    100% { transform: translate(13px, 33px) rotate(22deg); }
+  }
+  @keyframes eat-chew {
+    0% { transform: scaleY(0.85); }
+    100% { transform: scaleY(1.2); }
+  }
+  @keyframes eat-tail {
+    0% { transform: rotate(-4deg); }
+    100% { transform: rotate(12deg); }
+  }
+
+  .mood {
+    font-size: 1.45rem;
+    font-weight: 600;
+    text-align: center;
+    margin: 2px 0;
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 99px;
+    padding: 7px 14px;
+  }
+  .trk {
+    flex: 1;
+    height: 13px;
+    background: var(--trk);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .trk i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--ac), #ff9eb5);
+    border-radius: 99px;
+    transition: width 0.5s;
+  }
+  .bar b {
+    min-width: 40px;
+    text-align: right;
+    font-size: 0.95rem;
+  }
+
+  .row3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .card {
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 20px;
+    padding: 12px;
+  }
+  .st {
+    text-align: center;
+    padding: 10px 6px;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .st .ic { font-size: 1.3rem; margin-bottom: 2px; }
+  .st b { display: block; font-size: 1.12rem; }
+  .st span.t { color: var(--mute); font-size: 0.8rem; font-weight: 500; }
+
+  /* Tarjeta compacta de progreso diario en Inicio */
+  .mini-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 18px;
+    padding: 8px 12px;
+    font-size: 0.84rem;
+  }
+  .mini-steps .ms-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .mini-steps .ms-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+  }
+  .mini-steps .ms-sub {
+    color: var(--mute);
+    font-weight: 500;
+  }
+  .mini-steps .ms-btn {
+    background: var(--sel);
+    color: var(--ink);
+    border-radius: 99px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: 0;
+    cursor: pointer;
+    color: var(--ink);
+    transition: transform 0.12s, background 0.2s;
+  }
+  button:active { transform: scale(0.97); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; }
+  .big, .soft {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    border-radius: 99px;
+    padding: 14px;
+    font-size: 1.05rem;
+  }
+  .big {
+    background: var(--ac);
+    color: var(--on);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  .soft { background: var(--sel); }
+  .mute { color: var(--mute); margin: 0; text-align: center; font-size: 0.9rem; }
+
+  /* Segmentados */
+  .seg {
+    display: flex;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 99px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg button {
+    flex: 1;
+    background: none;
+    border-radius: 99px;
+    padding: 8px 6px;
+    font-weight: 500;
+    font-size: 0.92rem;
+    position: relative;
+  }
+  .seg button.on {
+    background: var(--ac);
+    color: var(--on);
+    font-weight: 600;
+  }
+  .dot-ind {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f7a23b;
+  }
+
+  /* Anillo de Actividad */
+  .ringbox { position: relative; max-width: 240px; margin: 4px auto; }
+  .ringbox svg { width: 100%; display: block; }
+  .rt, .rp {
+    fill: none;
+    stroke-width: 16;
+    stroke-linecap: round;
+    transform: rotate(135deg);
+    transform-origin: 100px 100px;
+  }
+  .rt { stroke: var(--trk); stroke-dasharray: 377 503; }
+  .rp { stroke: var(--ac); stroke-dasharray: 0 503; transition: stroke-dasharray 0.6s; }
+  .rc {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .rc .ic { font-size: 1.7rem; color: var(--ac); }
+  .rc b { font-size: 2.2rem; line-height: 1.1; }
+  .rc small { color: var(--mute); font-size: 0.82rem; }
+  .sum {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+    font-weight: 600;
+    padding: 4px 0;
+  }
+  .sum div + div { border-left: 2px solid var(--bd); }
+  .sum .ic { color: var(--ac); display: block; font-size: 1.35rem; margin: 0 auto 3px; }
+  .bars {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    height: 130px;
+    padding-top: 8px;
+  }
+  .bars > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .bars .b {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: center;
+  }
+  .bars i {
+    display: block;
+    width: 100%;
+    max-width: 13px;
+    background: var(--ac);
+    border-radius: 6px;
+    opacity: 0.85;
+  }
+  .bars span { font-size: 0.7rem; color: var(--mute); height: 1em; }
+
+  /* Grid Gatitos */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cc {
+    position: relative;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 22px;
+    padding: 14px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .cc > svg { width: 76%; height: auto; transition: transform 0.2s; }
+  .cc:hover > svg { transform: scale(1.04); }
+  .cc.on { border-color: var(--ac); background: var(--sel); }
+  .cc .bd { position: absolute; top: 10px; right: 10px; font-size: 1.15rem; }
+  .cc b { font-size: 1.05rem; }
+  .cc small {
+    color: var(--mute);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 1.3em;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .cc.lk > svg { opacity: 0.6; }
+
+  /* Misiones y Logros */
+  .mrow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .mrow > .ic {
+    font-size: 1.6rem;
+    color: var(--ac);
+    width: 36px;
+    height: 36px;
+    background: var(--trk);
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .mrow .mbody { flex: 1; min-width: 0; }
+  .mrow .mtitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .mrow .mtitle b { font-size: 0.95rem; }
+  .mrow .mtitle span { font-size: 0.76rem; color: var(--mute); font-weight: 600; white-space: nowrap; }
+  .mrow .msub { font-size: 0.78rem; color: var(--mute); margin-top: 4px; display: flex; justify-content: space-between; }
+  .mchk {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--bd);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: transparent;
+    padding: 0;
+  }
+  .mchk.done { background: var(--ac); border-color: var(--ac); color: var(--on); }
+  .mplus {
+    background: var(--sel);
+    color: var(--ink);
+    border-radius: 99px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  /* Banner de Nivel y XP en Logros */
+  .lvl-card {
+    text-align: center;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .medal-wrap { width: 96px; height: 96px; margin-bottom: 2px; }
+  .lvl-card h2 { margin: 0; font-size: 1.45rem; }
+  .lvl-card .rank { color: var(--mute); font-size: 0.92rem; font-weight: 500; margin-bottom: 4px; }
+  .lvl-card .trk { width: 100%; height: 14px; }
+  .lvl-card small { color: var(--mute); font-weight: 600; font-size: 0.85rem; }
+
+  /* Hogar chips y opciones visuales */
+  .hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; }
+  .hopt {
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 18px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    position: relative;
+  }
+  .hopt.on { border-color: var(--ac); background: var(--sel); font-weight: 600; }
+  .hopt .swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  }
+  .hopt .chk-mini {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ac);
+    color: var(--on);
+    font-size: 0.65rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .hopt.on .chk-mini { display: flex; }
+
+  /* Mapa y GPS */
+  .mapwrap { position: relative; }
+  #map {
+    width: 100%;
+    height: 330px;
+    border-radius: 20px;
+    position: relative;
+    z-index: 0;
+    border: 2px solid var(--bd);
+  }
+  #map::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 450;
+    pointer-events: none;
+    background: var(--tint);
+    opacity: var(--top);
+    mix-blend-mode: var(--blend);
+  }
+  .pastel-tiles { filter: saturate(0.6) brightness(1.06) contrast(0.88); }
+  .dark-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.85) saturate(0.5); }
+  .mochi-pin {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--ac);
+    border: 3px solid #fff;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  }
+  .leaflet-container { font-family: inherit; }
+  .gps {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1.5px solid var(--bd);
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .gps i { width: 10px; height: 10px; border-radius: 50%; background: #8a9a97; }
+  .gps.on i { background: #2ecc71; animation: p 1.4s infinite; }
+  .gps.search i { background: #ffc93c; animation: p 1s infinite; }
+  .gps.err i { background: #e5484d; }
+  @keyframes p { 50% { opacity: 0.3; } }
+  #empty {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 1100;
+    pointer-events: none;
+    margin: 0;
+    padding: 8px 12px;
+    text-align: center;
+    background: var(--card);
+    border: 1.5px solid var(--bd);
+    border-radius: 14px;
+    font-size: 0.88rem;
+  }
+  [hidden] { display: none !important; }
+  .help ol { margin: 6px 0 10px; padding-left: 20px; }
+  .sw {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 16px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 1.05rem;
+  }
+  .sw.on { border-color: var(--ac); background: var(--sel); }
+  .sw i { display: flex; border-radius: 50%; overflow: hidden; width: 28px; height: 28px; }
+  .sw i b { flex: 1; }
+  input {
+    font: inherit;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--bd);
+    background: var(--card);
+    color: var(--ink);
+  }
+
+  /* Navegación inferior */
+  nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(440px, 100%);
+    z-index: 2000;
+    display: flex;
+    justify-content: space-around;
+    background: var(--bg);
+    border-top: 1.5px solid var(--bd);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  nav button {
+    background: none;
+    border-radius: 18px;
+    padding: 6px 8px;
+    min-width: 58px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--mute);
+  }
+  nav button .ic { font-size: 1.15rem; }
+  nav button.on { background: var(--sel); color: var(--ink); font-weight: 600; }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 88px;
+    transform: translateX(-50%);
+    z-index: 2100;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+  #toast.show { opacity: 1; }
+
+  /* Modal propio sin window.confirm */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border: 2px solid var(--bd);
+    border-radius: 24px;
+    padding: 20px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .modal-box h3 { margin: 0; font-size: 1.2rem; }
+  .modal-box p { margin: 0; color: var(--mute); font-size: 0.95rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cat-svg *, .gps i, .rp {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#fdeee9">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Gato">
+</head>
+<body>
+<main>
+<!-- ==================== 1. PESTAÑA INICIO ==================== -->
+<section class="tab on" id="t-inicio">
+  <header>
+    <span class="ic" data-ic="paw" style="font-size:1.5rem;color:var(--ac)"></span>
+    <h1 id="name">Yuyi</h1>
+    <span class="pill" title="Monedas"><span class="ic" data-ic="coin"></span><span id="coins">120</span></span>
+    <span class="pill" title="Gemas"><span class="ic" data-ic="gem"></span><span id="gems">2</span></span>
+    <button class="ib" id="sndbtn" aria-label="Alternar sonido" title="Sonido"><span class="ic" data-ic="vol"></span></button>
+    <button class="ib" id="gear" aria-label="Ajustes" title="Ajustes"><span class="ic" data-ic="gear"></span></button>
+  </header>
+
+  <div class="scene" id="scene">
+    <div id="catbox" role="button" tabindex="0" aria-label="Acariciar a tu gatito"></div>
+    <div class="anim-bar" id="anim-bar" aria-label="Probar animaciones del gatito">
+      <button type="button" data-st="dormir">💤 Dormir</button>
+      <button type="button" data-st="idle" class="on">🐱 Idle</button>
+      <button type="button" data-st="caminar">🐾 Caminar</button>
+      <button type="button" data-st="feliz">💕 Feliz</button>
+      <button type="button" data-st="comer">🥣 Comer</button>
+    </div>
+  </div>
+
+  <p class="mood" id="mood">¡Estoy feliz!</p>
+
+  <!-- Barra de Saciedad / Hambre -->
+  <div class="bar">
+    <span class="ic" data-ic="bowl" style="font-size:1.45rem;color:var(--ac)"></span>
+    <div class="trk" id="trk" role="progressbar" aria-label="Saciedad"><i id="fill"></i></div>
+    <b id="pct">85%</b>
+  </div>
+
+  <!-- 3 Tarjetas de Estado: Ánimo, Energía, Bienestar -->
+  <div class="row3">
+    <div class="card st">
+      <span class="ic" data-ic="heart" style="color:#f27ca6"></span>
+      <b id="st-animo">90%</b>
+      <span class="t">Ánimo</span>
+    </div>
+    <div class="card st">
+      <span class="ic" data-ic="bolt" style="color:#f7b93b"></span>
+      <b id="st-energia">80%</b>
+      <span class="t">Energía</span>
+    </div>
+    <div class="card st">
+      <span class="ic" data-ic="sparkle" style="color:#6fd1e8"></span>
+      <b id="st-bienestar">85%</b>
+      <span class="t">Bienestar</span>
+    </div>
+  </div>
+
+  <!-- Tarjeta compacta de progreso diario y acceso rápido a Caminar -->
+  <div class="mini-steps">
+    <div class="ms-info">
+      <span class="ms-item"><span class="ic" data-ic="steps" style="color:var(--ac)"></span><span id="steps">0</span> pasos</span>
+      <span class="ms-sub" id="km">0,0 km</span>
+      <span class="ms-sub">·</span>
+      <span class="ms-sub" id="kcal">0 kcal</span>
+    </div>
+    <button class="ms-btn" id="walk"><span class="ic" data-ic="shoe"></span>Caminar</button>
+  </div>
+
+  <!-- Botones principales: Jugar y Alimentar -->
+  <div class="two">
+    <button class="soft" id="playbtn"><span class="ic" data-ic="game"></span>Jugar</button>
+    <button class="big" id="feed"><span class="ic" data-ic="bowl"></span>Alimentar</button>
+  </div>
+</section>
+
+<!-- ==================== 2. PESTAÑA ACTIVIDAD ==================== -->
+<section class="tab" id="t-actividad">
+  <header><span class="ic" data-ic="steps" style="font-size:1.5rem;color:var(--ac)"></span><h1>Actividad</h1></header>
+  <div class="seg" id="aseg"><button data-n="1" class="on">Hoy</button><button data-n="7">Semana</button><button data-n="30">Mes</button></div>
+  <div class="ringbox">
+    <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="rt" cx="100" cy="100" r="80"/><circle class="rp" id="rp" cx="100" cy="100" r="80"/></svg>
+    <div class="rc"><span class="ic" data-ic="steps"></span><b id="asteps">0</b><span>pasos</span><small id="apct"></small></div>
+  </div>
+  <div class="sum">
+    <div><span class="ic" data-ic="pin"></span><span id="akm">0,0 km</span></div>
+    <div><span class="ic" data-ic="flame"></span><span id="akcal">0 kcal</span></div>
+    <div><span class="ic" data-ic="clock"></span><span id="amin">0 min</span></div>
+  </div>
+  <div id="achart"></div>
+  <button class="big" id="openmap"><span class="ic" data-ic="pin"></span>Abrir mapa del recorrido</button>
+</section>
+
+<!-- ==================== 3. PESTAÑA MIS GATITOS ==================== -->
+<section class="tab" id="t-gatitos">
+  <header><span class="ic" data-ic="cat" style="font-size:1.5rem;color:var(--ac)"></span><h1>Mis Gatitos</h1></header>
+  <div class="grid2" id="cats"></div>
+</section>
+
+<!-- ==================== 4. PESTAÑA MI HOGAR ==================== -->
+<section class="tab" id="t-hogar">
+  <header><span class="ic" data-ic="sofa" style="font-size:1.5rem;color:var(--ac)"></span><h1>Mi Hogar</h1></header>
+  <div class="scene" id="hscene"></div>
+  <div class="seg" id="hseg">
+    <button data-k="mueble" class="on">Muebles</button>
+    <button data-k="deco">Deco</button>
+    <button data-k="bed">Camas</button>
+    <button data-k="piso">Pisos</button>
+  </div>
+  <div class="hgrid" id="hopts"></div>
+</section>
+
+<!-- ==================== 5. PESTAÑA MISIONES Y LOGROS ==================== -->
+<section class="tab" id="t-misiones">
+  <header><span class="ic" data-ic="check" style="font-size:1.5rem;color:var(--ac)"></span><h1>Misiones</h1></header>
+  <div class="seg" id="mseg">
+    <button data-m="d" class="on">Diarias<span class="dot-ind" id="mdot"></span></button>
+    <button data-m="s">Semanales</button>
+    <button data-m="l">Logros</button>
+  </div>
+  <div id="mlist" style="display:flex;flex-direction:column;gap:10px"></div>
+</section>
+
+<!-- ==================== 6. PESTAÑA CAMINAR (GPS) ==================== -->
+<section class="tab" id="t-caminar">
+  <header><button class="ib" id="back" aria-label="Volver"><span class="ic" data-ic="back"></span></button><h1>Salida</h1></header>
+  <div class="mapwrap">
+    <div id="gps" class="gps off" role="status" aria-live="polite"><i></i><span>GPS apagado</span></div>
+    <div id="map" role="region" aria-label="Mapa de tu recorrido"></div>
+    <p id="empty">Tu recorrido aparece acá mientras caminás.</p>
+  </div>
+  <div class="row3">
+    <div class="card st"><span class="ic" data-ic="pin"></span><b id="dist">0 m</b><span class="t">esta salida</span></div>
+    <div class="card st"><span class="ic" data-ic="steps"></span><b id="ssteps">0</b><span class="t">pasos</span></div>
+    <div class="card st"><span class="ic" data-ic="flame"></span><b id="tkm">0 km</b><span class="t">en total</span></div>
+  </div>
+  <div id="help" class="card help" hidden>
+    <b>Cómo activar el GPS</b>
+    <ol id="hsteps"></ol>
+    <p class="mute" style="text-align:left;margin-bottom:10px">Si abriste esto dentro de otra app, abrí el link en Chrome o Safari.</p>
+    <button class="big" id="retry">Reintentar</button>
+  </div>
+  <button class="big" id="go">Empezar salida</button>
+  <p class="mute" id="msg"></p>
+  <button id="sim" style="background:none;font-weight:500;text-decoration:underline;color:var(--mute);padding:6px">Probar sin salir: sumar 500 m</button>
+</section>
+
+<!-- ==================== 7. PESTAÑA AJUSTES ==================== -->
+<section class="tab" id="t-ajustes">
+  <header><button class="ib" id="back2" aria-label="Volver"><span class="ic" data-ic="back"></span></button><h1>Ajustes</h1></header>
+  <label for="nameIn"><b>Nombre de tu gato</b></label>
+  <input id="nameIn" maxlength="14">
+
+  <b style="margin-top:6px">Sonido e interacción</b>
+  <div class="two">
+    <button class="soft" id="sndtoggle2"><span class="ic" data-ic="vol"></span><span id="sndlbl">Sonido: ON</span></button>
+    <button class="soft" id="sndtest"><span>🔊</span>Probar sonido</button>
+  </div>
+
+  <b style="margin-top:6px">Tema visual</b>
+  <div id="themes"></div>
+  <p class="mute" style="margin-top:8px">Mi Gato · tu mascota que crece con tus pasos y hábitos 🐾</p>
+</section>
+</main>
+
+<!-- Modal de confirmación propio (sin alert/confirm) -->
+<div class="modal-bg" id="modal">
+  <div class="modal-box">
+    <h3 id="m-title">Adoptar gatito</h3>
+    <p id="m-desc">¿Querés adoptar a este gatito?</p>
+    <div class="two">
+      <button class="soft" id="m-no">Cancelar</button>
+      <button class="big" id="m-yes">Adoptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barra de navegación inferior -->
+<nav id="nav">
+  <button data-tab="inicio" class="on"><span class="ic" data-ic="home"></span>Inicio</button>
+  <button data-tab="actividad"><span class="ic" data-ic="paw"></span>Actividad</button>
+  <button data-tab="gatitos"><span class="ic" data-ic="cat"></span>Gatitos</button>
+  <button data-tab="hogar"><span class="ic" data-ic="sofa"></span>Hogar</button>
+  <button data-tab="misiones"><span class="ic" data-ic="check"></span>Misiones</button>
+</nav>
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  const KEY = 'migato-v5';
+  const GOAL = 5000;
+  const DAY = 864e5;
+
+  const TH = {
+    peach:  ['Durazno', '#f27d84', '#fdeee9'],
+    noche:  ['Noche',   '#f7a23b', '#1c222e'],
+    bosque: ['Bosque',  '#587a4f', '#f6efe0'],
+    luna:   ['Luna',    '#f27ca6', '#23192d']
+  };
+
+  /* 6 Gatitos adoptables con colores planos y rasgos propios */
+  const CATS = {
+    yuyi:    { name: 'Yuyi',    cost: 0,   curr: 'c', fur: '#fffaf3', furShadow: '#f2e4d8', p1: '#f3b27a', p2: '#f3b27a', face: '#ffffff', eye: '#3a2a2a' },
+    nube:    { name: 'Nube',    cost: 300, curr: 'c', fur: '#9b9893', furShadow: '#84807b', p1: '#6e6a66', p2: '#55504c', face: '#ece7e1', eye: '#3a2a2a', tabby: true },
+    sombra:  { name: 'Sombra',  cost: 5,   curr: 'g', fur: '#3b3a44', furShadow: '#2e2d36', p1: '#26252d', p2: '#26252d', face: '#6b6878', eye: '#f2b705', yellowEye: true },
+    copito:  { name: 'Copito',  cost: 500, curr: 'c', fur: '#ffffff', furShadow: '#ece6ef', p1: '#f5c3b4', p2: '#f5c3b4', face: '#ffffff', eye: '#3a2a2a', bow: true },
+    mochi:   { name: 'Mochi',   cost: 800, curr: 'c', fur: '#fff4ea', furShadow: '#efe0d2', p1: '#3b3a44', p2: '#f3a868', face: '#ffffff', eye: '#3a2a2a', calico3: true },
+    bigotes: { name: 'Bigotes', cost: 10,  curr: 'g', fur: '#c9966b', furShadow: '#b38056', p1: '#9e6d43', p2: '#855732', face: '#ebd3be', eye: '#3a2a2a', fluffy: true }
+  };
+
+  /* Opciones de Mi Hogar */
+  const HOME_OPTS = {
+    mueble: [
+      { id: 'cama',     label: 'Almohadón' },
+      { id: 'casita',   label: 'Cucha' },
+      { id: 'rascador', label: 'Rascador' },
+      { id: 'sillon',   label: 'Sillón' }
+    ],
+    deco: [
+      { id: 'planta', label: 'Planta' },
+      { id: 'cuadro', label: 'Cuadro' },
+      { id: 'farol',  label: 'Farol' },
+      { id: 'bosque', label: 'Bosque' },
+      { id: 'luces',  label: 'Luces' },
+      { id: 'nada',   label: 'Nada' }
+    ],
+    bed: [
+      { id: 'rosa',    label: 'Rosa',    color: '#f7a8b0' },
+      { id: 'naranja', label: 'Naranja', color: '#e07b39' },
+      { id: 'oliva',   label: 'Oliva',   color: '#7f8461' },
+      { id: 'lila',    label: 'Lila',    color: '#c982cf' },
+      { id: 'celeste', label: 'Celeste', color: '#7cc2e8' }
+    ],
+    piso: [
+      { id: 'madera',   label: 'Madera',   color: '#c99a63' },
+      { id: 'alfombra', label: 'Alfombra', color: '#9d80b8' },
+      { id: 'piedra',   label: 'Piedra',   color: '#6b7280' }
+    ]
+  };
+
+  const RANGOS = [
+    'Gatito curioso',
+    'Explorador de casa',
+    'Paseador de barrio',
+    'Caminante felino',
+    'Atleta bigotudo',
+    'Leyenda gatuna'
+  ];
+
+  const P = {
+    home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    paw: '<circle cx="6" cy="11" r="2"/><circle cx="10" cy="6.5" r="2"/><circle cx="14" cy="6.5" r="2"/><circle cx="18" cy="11" r="2"/><path d="M12 12c-3 0-5.5 3-5.5 5.2 0 1.6 1.4 2.3 3 2.3 1 0 1.6-.4 2.5-.4s1.5.4 2.5.4c1.6 0 3-.7 3-2.3C17.5 15 15 12 12 12z"/>',
+    cat: '<path d="M4 5l4 3h8l4-3v9a8 8 0 0 1-16 0z"/><path d="M9.5 13v.5M14.5 13v.5M11 16.5l1 .8 1-.8"/>',
+    sofa: '<path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z"/><path d="M6 18v2M18 18v2"/>',
+    check: '<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M8.5 13.5l2.5 2.5 4.5-5"/>',
+    steps: '<path d="M8 3c2 0 3 2 3 5s-1 4-3 4-3-1-3-4 1-5 3-5z"/><path d="M5.5 15h5v1.5a2.5 2.5 0 0 1-5 0z"/><path d="M16 8c2 0 3 2 3 5s-1 4-3 4-3-1-3-4 1-5 3-5z"/><path d="M13.5 20h5v.5a2.5 2.5 0 0 1-5 0z"/>',
+    pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    flame: '<path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    bowl: '<path d="M3 12h18c0 4-4 7-9 7s-9-3-9-7z"/><path d="M7 12c0-2 2-3.5 5-3.5s5 1.5 5 3.5"/>',
+    shoe: '<path d="M3 17l1-8 4 2 3-3 2 2c3 1 7 2 8 5v2H3z"/><path d="M3 19h18"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    ok: '<path d="M5 12.5l4.5 4.5 9.5-9.5"/>',
+    game: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5M16 11.5h.01M18.5 13.5h.01"/>',
+    heart: '<path d="M12 20.5s-7-4.5-9-9a5.2 5.2 0 0 1 9-4.5 5.2 5.2 0 0 1 9 4.5c-2 4.5-9 9-9 9z"/>',
+    bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    sparkle: '<path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/>',
+    book: '<path d="M4 5a2 2 0 0 1 2-2h5v16H6a2 2 0 0 0-2 2V5z"/><path d="M20 5a2 2 0 0 0-2-2h-5v16h5a2 2 0 0 1 2 2V5z"/>',
+    gym: '<path d="M6.5 7v10M17.5 7v10M3 9v6M21 9v6M6.5 12h11"/>',
+    drop: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+    bed: '<path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M7 9V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>',
+    vol: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>',
+    mute: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/>'
+  };
+  const F = {
+    coin: '<circle cx="12" cy="12" r="10" fill="#f7a23b"/><circle cx="12" cy="12" r="6" fill="none" stroke="#fff" stroke-width="1.6"/>',
+    gem: '<path d="M12 21L3 9l3-5h12l3 5z" fill="#a66ee8"/><path d="M3 9h18M9 4l-2 5 5 12M15 4l2 5-5 12" stroke="#fff" stroke-width="1" fill="none" opacity=".7"/>',
+    star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" fill="#f7b93b"/>'
+  };
+
+  function ic(n) {
+    return F[n]
+      ? '<svg viewBox="0 0 24 24">' + F[n] + '</svg>'
+      : '<svg viewBox="0 0 24 24" class="l">' + P[n] + '</svg>';
+  }
+  document.querySelectorAll('[data-ic]').forEach((e) => { e.innerHTML = ic(e.dataset.ic); });
+
+  /* ==========================================================================
+     MOTOR DE SONIDO INTERACTIVO WEB AUDIO API (Sin ronroneo)
+     ========================================================================== */
+  const SFX = (function () {
+    let ctx = null;
+    let unlocked = false;
+
+    function getCtx() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) ctx = new AC();
+      }
+      return ctx;
+    }
+
+    function unlock() {
+      const c = getCtx();
+      if (!c) return;
+      if (c.state === 'suspended') {
+        c.resume().catch(() => {});
+      }
+      if (!unlocked) {
+        try {
+          const buf = c.createBuffer(1, 1, 22050);
+          const src = c.createBufferSource();
+          src.buffer = buf;
+          src.connect(c.destination);
+          src.start(0);
+          unlocked = true;
+        } catch (e) {}
+      }
+    }
+
+    ['touchstart', 'pointerdown', 'click', 'keydown'].forEach((ev) => {
+      document.addEventListener(ev, unlock, { capture: true, passive: true });
+    });
+
+    function tone(opts) {
+      if (!s.sound) return;
+      const c = getCtx();
+      if (!c) return;
+      if (c.state === 'suspended') c.resume().catch(() => {});
+
+      const now = c.currentTime + (opts.delay || 0);
+      const dur = opts.dur || 0.1;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = opts.type || 'sine';
+      osc.frequency.setValueAtTime(opts.f1, now);
+      if (opts.f2) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, opts.f2), now + dur);
+      }
+
+      const vol = opts.vol || 0.16;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(vol, now + Math.min(0.015, dur * 0.2));
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+      if (opts.lp) {
+        const filt = c.createBiquadFilter();
+        filt.type = 'lowpass';
+        filt.frequency.setValueAtTime(opts.lp, now);
+        osc.connect(filt);
+        filt.connect(gain);
+      } else {
+        osc.connect(gain);
+      }
+      gain.connect(c.destination);
+      osc.start(now);
+      osc.stop(now + dur + 0.02);
+    }
+
+    function tap() {
+      tone({ type: 'triangle', f1: 520, f2: 760, dur: 0.065, vol: 0.15, lp: 2200 });
+    }
+
+    function tab() {
+      tone({ type: 'sine', f1: 440, f2: 554, dur: 0.075, vol: 0.14 });
+      tone({ type: 'sine', f1: 587, f2: 659, dur: 0.09, delay: 0.055, vol: 0.14 });
+    }
+
+    function meow() {
+      if (!s.sound) return;
+      const c = getCtx();
+      if (!c) return;
+      if (c.state === 'suspended') c.resume().catch(() => {});
+
+      const now = c.currentTime;
+      const dur = 0.34;
+      const osc = c.createOscillator();
+      const form = c.createBiquadFilter();
+      const gain = c.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(430, now);
+      osc.frequency.exponentialRampToValueAtTime(690, now + 0.13);
+      osc.frequency.exponentialRampToValueAtTime(495, now + dur);
+
+      form.type = 'bandpass';
+      form.frequency.setValueAtTime(980, now);
+      form.Q.setValueAtTime(2.6, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.24, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+      osc.connect(form);
+      form.connect(gain);
+      gain.connect(c.destination);
+      osc.start(now);
+      osc.stop(now + dur + 0.03);
+    }
+
+    function eat() {
+      [0, 0.17, 0.34].forEach((d, i) => {
+        tone({ type: 'triangle', f1: 310 + i * 35, f2: 190, dur: 0.09, delay: d, vol: 0.18, lp: 1200 });
+      });
+    }
+
+    function step() {
+      tone({ type: 'sine', f1: 165, f2: 85, dur: 0.065, vol: 0.15, lp: 450 });
+    }
+
+    function win() {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        tone({ type: 'sine', f1: freq, f2: freq * 1.01, dur: 0.24, delay: i * 0.075, vol: 0.17 });
+      });
+    }
+
+    return { unlock, tap, tab, meow, eat, step, win };
+  })();
+
+  /* Estado persistente en localStorage */
+  let s = {
+    full: 85,
+    mood: 90,
+    energy: 80,
+    t: Date.now(),
+    coins: 120,
+    gems: 2,
+    xp: 230,
+    sound: true,
+    totalM: 1200,
+    totalSteps: 1540,
+    totalFeeds: 6,
+    totalPlays: 8,
+    day: '',
+    dayM: 0,
+    daySteps: 0,
+    dayMin: 0,
+    feeds: 0,
+    plays: 0,
+    habits: { read: false, workout: false, water: 0, sleep: false },
+    claimed: {},
+    hours: new Array(24).fill(0),
+    hist: {},
+    goalDay: '',
+    theme: 'peach',
+    cat: 'yuyi',
+    cats: ['yuyi'],
+    catLevels: { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 },
+    home: { bed: 'rosa', deco: 'planta', mueble: 'cama', piso: 'madera' },
+    name: 'Yuyi'
+  };
+  let route = [];
+
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      s = Object.assign(s, parsed);
+      if (typeof s.sound !== 'boolean') s.sound = true;
+      if (!s.habits) s.habits = { read: false, workout: false, water: 0, sleep: false };
+      if (!s.claimed) s.claimed = {};
+      if (!s.catLevels) s.catLevels = { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 };
+      if (!s.home.piso) s.home.piso = 'madera';
+    }
+    route = JSON.parse(localStorage.getItem(KEY + '-r')) || [];
+  } catch (e) {}
+
+  const $ = (i) => document.getElementById(i);
+  let watching = null, last = null, session = 0, sessionSteps = 0, accM = 0, lastGpsMove = 0;
+  let motionOn = false, above = false, lastStep = 0, lastMin = -1, gv = 9.8, gpsState = 'off';
+  let cur = 'inicio', aN = 1, mT = 'd', hK = 'mueble';
+  let map = null, line = null, startM = null, endM = null, tiles = null, lastLen = -1, tt;
+  let catState = 'idle', stateTimer = null, blinkTimer = null, lastRenderedKey = '';
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(s));
+      localStorage.setItem(KEY + '-r', JSON.stringify(route));
+    } catch (e) {}
+  }
+
+  function say(t) {
+    const e = $('toast');
+    e.textContent = t;
+    e.className = 'show';
+    clearTimeout(tt);
+    tt = setTimeout(() => { e.className = ''; }, 2800);
+  }
+
+  function dk(d) {
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function decay() {
+    const n = Date.now();
+    const hrs = (n - s.t) / 3600000;
+    if (hrs > 0) {
+      s.full = Math.max(0, s.full - hrs * 4.2);
+      s.mood = Math.max(15, s.mood - hrs * 2.5);
+      s.energy = Math.min(100, Math.max(20, s.energy + hrs * 3.0));
+    }
+    s.t = n;
+  }
+
+  function rollDay() {
+    const k = dk(new Date());
+    if (s.day !== k) {
+      if (s.day) s.hist[s.day] = [s.daySteps, s.dayM, s.dayMin];
+      s.day = k;
+      s.dayM = 0;
+      s.daySteps = 0;
+      s.dayMin = 0;
+      s.feeds = 0;
+      s.plays = 0;
+      s.habits = { read: false, workout: false, water: 0, sleep: false };
+      s.claimed = {};
+      s.hours = new Array(24).fill(0);
+    }
+  }
+
+  function nf(n) { return Math.floor(n).toLocaleString('es-AR'); }
+  function km(m) { return (m / 1000).toFixed(1).replace('.', ',') + ' km'; }
+
+  function addXp(amount) {
+    const oldLvl = Math.floor(s.xp / 500) + 1;
+    s.xp += amount;
+    const newLvl = Math.floor(s.xp / 500) + 1;
+    s.catLevels[s.cat] = newLvl;
+    if (newLvl > oldLvl) {
+      s.gems++;
+      SFX.win();
+      say('🎉 ¡Subiste a Nivel ' + newLvl + '! +1 gema');
+    }
+  }
+
+  function checkGoal() {
+    if (s.daySteps >= GOAL && s.goalDay !== s.day) {
+      s.goalDay = s.day;
+      s.gems++;
+      addXp(100);
+      SFX.win();
+      say('¡Objetivo de 5.000 pasos! +1 gema y +100 XP');
+    }
+  }
+
+  function range(n) {
+    let st = 0, m = 0, mi = 0, arr = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * DAY);
+      const k = dk(d);
+      const v = k === s.day ? [s.daySteps, s.dayM, s.dayMin] : (s.hist[k] || [0, 0, 0]);
+      st += v[0];
+      m += v[1];
+      mi += v[2];
+      arr.push([v[0], d]);
+    }
+    return { st, m, mi, arr };
+  }
+
+  /* Parpadeo natural aleatorio en estado Idle y Comer */
+  function startBlinkLoop() {
+    clearTimeout(blinkTimer);
+    blinkTimer = setTimeout(() => {
+      if (catState === 'idle' || catState === 'comer') {
+        document.querySelectorAll('.rig-ojos').forEach((el) => {
+          el.classList.add('blink');
+          setTimeout(() => {
+            el.classList.remove('blink');
+            if (Math.random() < 0.25) {
+              setTimeout(() => {
+                el.classList.add('blink');
+                setTimeout(() => el.classList.remove('blink'), 130);
+              }, 160);
+            }
+          }, 140);
+        });
+      }
+      startBlinkLoop();
+    }, 2400 + Math.random() * 2800);
+  }
+
+  /* Control de estados del personaje SVG (dormir, idle, caminar, feliz, comer) */
+  function setCatState(st, ms) {
+    catState = st;
+    clearTimeout(stateTimer);
+
+    document.querySelectorAll('#anim-bar button').forEach((btn) => {
+      btn.classList.toggle('on', btn.dataset.st === st);
+    });
+
+    const svg = $('cat');
+    if (svg) {
+      svg.setAttribute('data-state', st);
+    } else {
+      renderCatScene(true);
+    }
+
+    if (ms) {
+      stateTimer = setTimeout(() => {
+        const restState = s.energy < 35 ? 'dormir' : 'idle';
+        setCatState(restState);
+      }, ms);
+    }
+  }
+
+  $('anim-bar').onclick = function (e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const st = b.dataset.st;
+    setCatState(st);
+    if (st === 'feliz') SFX.meow();
+    else if (st === 'comer') SFX.eat();
+    else if (st === 'caminar') SFX.step();
+    else SFX.tap();
+  };
+
+  /* ==========================================================================
+     GENERADOR DE ESCENA VECTORIAL 2D (INICIO Y MI HOGAR SINCRONIZADOS)
+     ========================================================================== */
+  function buildSceneSVG(opts) {
+    const mode = opts.mode || 'home';
+    const uid = mode === 'home' ? 'h' : 'r';
+    const c = CATS[opts.catId] || CATS.yuyi;
+    const st = opts.state || 'idle';
+    const eyeStroke = c.yellowEye ? '#d4a32c' : c.eye;
+    const isNightSky = s.theme === 'noche' || s.theme === 'luna';
+
+    let svg = '<svg id="' + (mode === 'home' ? 'cat' : 'hcat') + '" class="cat-svg" data-state="' + st + '" viewBox="0 0 320 226" role="img" aria-label="Tu gatito en su habitación">' +
+      '<defs>' +
+        '<clipPath id="' + uid + '-bc"><ellipse cx="144" cy="158" rx="92" ry="42"/></clipPath>' +
+        '<clipPath id="' + uid + '-hc"><circle cx="204" cy="138" r="45"/></clipPath>' +
+      '</defs>';
+
+    /* 1. PISO */
+    if (opts.piso === 'madera') {
+      svg += '<rect x="0" y="178" width="320" height="48" fill="var(--floor1)"/>' +
+             '<path d="M0 192 H320 M0 208 H320 M65 178 V192 M185 178 V192 M115 192 V208 M245 192 V208 M45 208 V226 M165 208 V226" stroke="var(--floor2)" stroke-width="2" opacity="0.55"/>';
+    } else if (opts.piso === 'alfombra') {
+      svg += '<rect x="0" y="178" width="320" height="48" fill="#6b5687"/>' +
+             '<ellipse cx="160" cy="200" rx="146" ry="22" fill="#8f76b0" opacity="0.65"/>';
+    } else {
+      svg += '<rect x="0" y="178" width="320" height="48" fill="#525866"/>' +
+             '<path d="M0 195 H320 M0 212 H320 M80 178 V195 M200 178 V195 M135 195 V212 M260 195 V212" stroke="#383c47" stroke-width="2" opacity="0.6"/>';
+    }
+
+    /* 2. VENTANA DE FONDO (adaptada al tema día/noche) */
+    svg += '<g>' +
+      '<path d="M74 118 V62 a26 26 0 0 1 52 0 V118z" fill="var(--win-sky)" stroke="var(--win-frame)" stroke-width="4.5"/>' +
+      (isNightSky
+        ? '<circle cx="90" cy="66" r="6" fill="#ffe38f"/><circle cx="111" cy="56" r="1.6" fill="#fff"/><circle cx="114" cy="76" r="1.4" fill="#fff"/>'
+        : '<circle cx="110" cy="64" r="7" fill="#ffd97d" opacity="0.9"/><ellipse cx="89" cy="70" rx="9" ry="4.5" fill="#fff" opacity="0.8"/>') +
+      '<path d="M100 36 V118 M74 78 H126" stroke="var(--win-frame)" stroke-width="3.5"/>' +
+    '</g>';
+
+    /* 3. DECORACIÓN SELECCIONADA EN MI HOGAR */
+    if (opts.deco === 'planta') {
+      svg += '<g>' +
+        '<rect x="202" y="42" width="76" height="8" rx="4" fill="#8f633e"/>' +
+        '<ellipse cx="222" cy="60" rx="6" ry="15" fill="#7fa56a" transform="rotate(-24 222 60)"/>' +
+        '<ellipse cx="236" cy="64" rx="6" ry="17" fill="#93b87b" transform="rotate(14 236 64)"/>' +
+        '<ellipse cx="252" cy="59" rx="6" ry="15" fill="#7fa56a" transform="rotate(30 252 59)"/>' +
+        '<rect x="18" y="140" width="28" height="38" rx="5" fill="#d9b99b"/>' +
+        '<ellipse cx="25" cy="116" rx="11" ry="26" fill="#7fa56a" transform="rotate(-22 25 116)"/>' +
+        '<ellipse cx="43" cy="112" rx="10" ry="24" fill="#93b87b" transform="rotate(20 43 112)"/>' +
+      '</g>';
+    } else if (opts.deco === 'cuadro') {
+      svg += '<g>' +
+        '<rect x="26" y="54" width="34" height="42" rx="5" fill="#fdf6ec" stroke="#b5895a" stroke-width="4"/>' +
+        '<circle cx="43" cy="78" r="5.5" fill="#f27ca6"/>' +
+        '<circle cx="36" cy="70" r="2.4" fill="#f27ca6"/><circle cx="43" cy="67" r="2.4" fill="#f27ca6"/><circle cx="50" cy="70" r="2.4" fill="#f27ca6"/>' +
+      '</g>';
+    } else if (opts.deco === 'farol') {
+      svg += '<g>' +
+        '<circle cx="282" cy="108" r="32" fill="#ffe082" opacity="0.22"/>' +
+        '<rect x="278" y="122" width="8" height="56" rx="3" fill="#a67c52"/>' +
+        '<rect x="266" y="174" width="32" height="6" rx="3" fill="#8c6239"/>' +
+        '<path d="M262 122 l8 -28 h24 l8 28z" fill="#ffd97d"/>' +
+      '</g>';
+    } else if (opts.deco === 'bosque') {
+      svg += '<g opacity="0.65">' +
+        '<path d="M0 178 L46 98 L92 178Z M228 178 L274 96 L320 178Z" fill="#6f8772"/>' +
+      '</g>';
+    } else if (opts.deco === 'luces') {
+      svg += '<g>' +
+        '<path d="M12 24 Q85 52 160 24 T308 24" fill="none" stroke="#a992c2" stroke-width="2"/>' +
+        '<circle cx="52" cy="37" r="5" fill="#ffd166"/><circle cx="112" cy="40" r="5" fill="#ff8fab"/>' +
+        '<circle cx="174" cy="28" r="5" fill="#ffd166"/><circle cx="236" cy="36" r="5" fill="#8ecae6"/>' +
+      '</g>';
+    }
+
+    /* 4. MUEBLE SELECCIONADO EN MI HOGAR */
+    if (opts.mueble === 'casita') {
+      svg += '<g>' +
+        '<path d="M222 178 V124 L262 94 L302 124 V178 Z" fill="#c99a63"/>' +
+        '<path d="M214 128 L262 88 L310 128" fill="none" stroke="#8f633e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M244 178 V146 a18 18 0 0 1 36 0 V178 Z" fill="#4a3222"/>' +
+      '</g>';
+    } else if (opts.mueble === 'rascador') {
+      svg += '<g>' +
+        '<rect x="242" y="170" width="60" height="10" rx="5" fill="#b5895a"/>' +
+        '<rect x="264" y="102" width="16" height="70" rx="4" fill="#d9b382"/>' +
+        '<rect x="244" y="94" width="56" height="12" rx="6" fill="#c99a63"/>' +
+        '<circle cx="254" cy="118" r="5" fill="#f27ca6"/>' +
+      '</g>';
+    } else if (opts.mueble === 'sillon') {
+      svg += '<g>' +
+        '<rect x="44" y="114" width="232" height="66" rx="22" fill="#b86b52"/>' +
+        '<rect x="34" y="138" width="28" height="44" rx="12" fill="#9c553e"/>' +
+        '<rect x="258" y="138" width="28" height="44" rx="12" fill="#9c553e"/>' +
+      '</g>';
+    }
+
+    /* 5. ALMOHADÓN / CAMA */
+    svg += '<ellipse id="' + uid + '-sombra" class="rig-part rig-sombra" cx="158" cy="194" rx="124" ry="24" fill="var(--cush)"/>' +
+           '<ellipse cx="158" cy="187" rx="104" ry="16" fill="#ffffff" opacity="0.22"/>';
+
+    /* 6. PLATO DE COMIDA (visible en estado 'comer') */
+    svg += '<g id="' + uid + '-plato" class="rig-plato">' +
+      '<ellipse cx="268" cy="196" rx="28" ry="6.5" fill="#000" opacity="0.16"/>' +
+      '<circle cx="260" cy="182" r="4.2" fill="var(--kibble)"/>' +
+      '<circle cx="268" cy="180" r="4.8" fill="#b36834"/>' +
+      '<circle cx="276" cy="182" r="4.2" fill="var(--kibble)"/>' +
+      '<path d="M244 183 H292 L286 195 Q268 199 250 195 Z" fill="var(--bowl)"/>' +
+      '<ellipse cx="268" cy="183" rx="24" ry="4.2" fill="var(--bowl-dark)"/>' +
+    '</g>';
+
+    /* ========================================================================
+       RIG DEL GATITO (8 GRUPOS INDEPENDIENTES)
+       ======================================================================== */
+    svg += '<g id="' + uid + '-root" class="rig-part rig-root">';
+
+      /* Rayitas de velocidad detrás del gatito al caminar */
+      svg += '<g class="speed-lines" stroke="var(--ac)" stroke-width="3.5" stroke-linecap="round">' +
+        '<line x1="20" y1="154" x2="42" y2="154"/>' +
+        '<line x1="14" y1="166" x2="40" y2="166"/>' +
+        '<line x1="22" y1="178" x2="42" y2="178"/>' +
+      '</g>';
+
+      /* GRUPO 1: COLA CURVA GRUESA CON PUNTA MANCHADA */
+      svg += '<g id="' + uid + '-cola" class="rig-part rig-cola">' +
+        '<path d="M68 168 Q34 166 46 136 Q54 116 84 128" fill="none" stroke="' + c.fur + '" stroke-width="21" stroke-linecap="round"/>' +
+        '<path d="M46 136 Q54 116 80 126" fill="none" stroke="' + c.p1 + '" stroke-width="21" stroke-linecap="round"/>' +
+      '</g>';
+
+      /* GRUPO 2 y 4 (Parte caminando): 4 PATAS CORTAS INTEGRADAS AL CUERPO */
+      svg += '<g class="paws-walk">' +
+        '<g id="' + uid + '-patas-traseras" class="rig-part rig-patas-traseras">' +
+          '<g class="rig-part rig-pata pata-ti"><rect x="86" y="176" width="21" height="32" rx="10.5" fill="' + c.furShadow + '"/></g>' +
+          '<g class="rig-part rig-pata pata-td"><rect x="108" y="178" width="22" height="32" rx="11" fill="' + c.fur + '"/></g>' +
+        '</g>' +
+        '<g id="' + uid + '-patas-delanteras" class="rig-part rig-patas-delanteras">' +
+          '<g class="rig-part rig-pata pata-di"><rect x="166" y="176" width="21" height="32" rx="10.5" fill="' + c.furShadow + '"/></g>' +
+          '<g class="rig-part rig-pata pata-dd"><rect x="188" y="178" width="22" height="32" rx="11" fill="' + c.fur + '"/></g>' +
+        '</g>' +
+      '</g>';
+
+      /* GRUPO 3: CUERPO MULLIDO HORIZONTAL */
+      svg += '<g id="' + uid + '-cuerpo" class="rig-part rig-cuerpo">' +
+        '<ellipse cx="144" cy="158" rx="92" ry="42" fill="' + c.fur + '"/>' +
+        '<g clip-path="url(#' + uid + '-bc)">' +
+          '<ellipse cx="92" cy="130" rx="25" ry="16" fill="' + c.p1 + '"/>' +
+          '<ellipse cx="136" cy="126" rx="14" ry="19" fill="' + c.p2 + '"/>' +
+          '<ellipse cx="114" cy="184" rx="28" ry="12" fill="' + c.p1 + '"/>' +
+        '</g>' +
+      '</g>';
+
+      /* Patitas acurrucadas en reposo */
+      svg += '<g class="paws-rest">' +
+        '<ellipse cx="178" cy="183" rx="19" ry="10.5" fill="' + c.face + '"/>' +
+        '<ellipse cx="220" cy="184" rx="19" ry="10.5" fill="' + c.face + '"/>' +
+      '</g>';
+
+      /* GRUPO 5: CABEZA REDONDEADA + SUBGRUPOS FACIALES */
+      svg += '<g id="' + uid + '-cabeza" class="rig-part rig-cabeza">';
+
+        /* GRUPO 6: OREJAS TRIANGULARES CON INTERIOR ROSADO */
+        svg += '<g id="' + uid + '-orejas" class="rig-part rig-orejas">' +
+          '<g class="rig-part rig-oreja-i">' +
+            '<path d="M166 116 L170 76 L202 102Z" fill="' + c.fur + '"/>' +
+            '<path d="M174 106 L176 86 L192 100Z" fill="#f6a5b0"/>' +
+          '</g>' +
+          '<g class="rig-part rig-oreja-d">' +
+            '<path d="M240 116 L236 76 L204 102Z" fill="' + (c.calico3 ? c.p1 : c.fur) + '"/>' +
+            '<path d="M232 106 L230 86 L214 100Z" fill="#f6a5b0"/>' +
+          '</g>' +
+        '</g>';
+
+        if (c.fluffy) {
+          svg += '<circle cx="158" cy="144" r="13" fill="' + c.fur + '"/>' +
+                 '<circle cx="248" cy="144" r="13" fill="' + c.fur + '"/>';
+        }
+
+        /* Base redonda de la cabeza */
+        svg += '<circle cx="204" cy="138" r="45" fill="' + c.fur + '"/>';
+
+        /* Manchas en la cabeza recortadas al círculo */
+        svg += '<g clip-path="url(#' + uid + '-hc)">' +
+          '<ellipse cx="180" cy="115" rx="15" ry="12" fill="' + c.p1 + '"/>' +
+          (opts.catId === 'yuyi' || opts.catId === 'mochi' ? '<ellipse cx="229" cy="118" rx="12" ry="9" fill="' + c.p2 + '"/>' : '');
+        if (c.tabby) {
+          svg += '<path d="M197 97 v11 M203 96 v13 M209 97 v11" stroke="' + c.p2 + '" stroke-width="3" stroke-linecap="round"/>';
+        }
+        svg += '</g>';
+
+        if (c.bow) {
+          svg += '<g><path d="M176 96 l-17 -11 v24z M176 96 l17 -11 v24z" fill="#f2678f"/><circle cx="176" cy="96" r="5.5" fill="#d94a76"/></g>';
+        }
+
+        /* Hocico y mejillas rosadas */
+        svg += '<ellipse cx="208" cy="152" rx="29" ry="20" fill="' + c.face + '"/>' +
+               '<circle cx="184" cy="152" r="7" fill="#ff9aa8" opacity="0.5"/>' +
+               '<circle cx="232" cy="152" r="7" fill="#ff9aa8" opacity="0.5"/>';
+
+        /* GRUPO 7: OJOS (redondos en idle/comer, cerrados hacia abajo en dormir, curvos alegres en feliz/caminar) */
+        svg += '<g id="' + uid + '-ojos" class="rig-part rig-ojos">' +
+          '<g class="eye-open">' +
+            '<circle cx="189" cy="137" r="4.6" fill="' + c.eye + '"/>' +
+            '<circle cx="190.5" cy="135.5" r="1.5" fill="#ffffff"/>' +
+            '<circle cx="221" cy="137" r="4.6" fill="' + c.eye + '"/>' +
+            '<circle cx="222.5" cy="135.5" r="1.5" fill="#ffffff"/>' +
+          '</g>' +
+          '<g class="eye-sleep" fill="none" stroke="' + eyeStroke + '" stroke-width="3.4" stroke-linecap="round">' +
+            '<path d="M180 137 q9 9 18 0"/>' +
+            '<path d="M212 137 q9 9 18 0"/>' +
+          '</g>' +
+          '<g class="eye-happy" fill="none" stroke="' + eyeStroke + '" stroke-width="3.4" stroke-linecap="round">' +
+            '<path d="M180 140 q9 -9 18 0"/>' +
+            '<path d="M212 140 q9 -9 18 0"/>' +
+          '</g>' +
+        '</g>';
+
+        /* GRUPO 8: BOCA Y NARIZ TRIANGULAR ROSA */
+        svg += '<g id="' + uid + '-boca" class="rig-part rig-boca">' +
+          '<path d="M203 146 h10 l-5 6z" fill="#f08a9a"/>' +
+          '<path class="mouth-normal" d="M208 152 q-5 7 -11 3 M208 152 q5 7 11 3" fill="none" stroke="' + eyeStroke + '" stroke-width="2.5" stroke-linecap="round"/>' +
+          '<g class="mouth-happy"><path d="M201 153 Q208 163 215 153 Z" fill="#f0788c"/></g>' +
+          '<g class="mouth-eat"><ellipse cx="208" cy="156" rx="5.5" ry="4.5" fill="#f0788c"/></g>' +
+        '</g>';
+
+      svg += '</g>'; // fin rig-cabeza
+    svg += '</g>'; // fin rig-root
+
+    /* Letras z Z flotando al dormir */
+    svg += '<g class="zzz-group" fill="var(--mute)" font-weight="600">' +
+      '<text class="z1" x="242" y="114" font-size="16">z</text>' +
+      '<text class="z2" x="254" y="100" font-size="20">z</text>' +
+      '<text class="z3" x="268" y="84" font-size="24">Z</text>' +
+    '</g>';
+
+    svg += '</svg>';
+    return svg;
+  }
+
+  function renderCatScene(force) {
+    const box = $('catbox');
+    if (!box) return;
+    const key = [s.cat, s.home.bed, s.home.mueble, s.home.deco, s.home.piso, s.theme].join('|');
+    if (force || key !== lastRenderedKey) {
+      lastRenderedKey = key;
+      box.innerHTML = buildSceneSVG({
+        mode: 'home',
+        state: catState,
+        catId: s.cat,
+        bed: s.home.bed,
+        mueble: s.home.mueble,
+        deco: s.home.deco,
+        piso: s.home.piso
+      });
+    } else {
+      const svg = $('cat');
+      if (svg && svg.getAttribute('data-state') !== catState) {
+        svg.setAttribute('data-state', catState);
+      }
+    }
+  }
+
+  /* ---- 1. RENDER GENERAL ---- */
+  function render() {
+    decay();
+    rollDay();
+    const f = Math.round(s.full);
+    const mo = Math.round(s.mood);
+    const en = Math.round(s.energy);
+    const bien = Math.round((f + mo + en) / 3);
+
+    $('fill').style.width = f + '%';
+    $('trk').setAttribute('aria-valuenow', f);
+    $('pct').textContent = f + '%';
+
+    $('st-animo').textContent = mo + '%';
+    $('st-energia').textContent = en + '%';
+    $('st-bienestar').textContent = bien + '%';
+
+    $('mood').textContent = f < 35
+      ? '¡Tengo hambre! 🐟'
+      : mo < 40
+        ? 'Quiero jugar un rato 🧶'
+        : bien >= 75
+          ? '¡Estoy feliz!'
+          : '¡Todo tranquilo por acá!';
+
+    $('name').textContent = s.name;
+    $('coins').textContent = nf(s.coins);
+    $('gems').textContent = s.gems;
+    $('steps').textContent = nf(s.daySteps);
+    $('km').textContent = km(s.dayM);
+    $('kcal').textContent = Math.round(s.daySteps * 0.04) + ' kcal';
+    $('dist').textContent = Math.round(session) + ' m';
+    $('ssteps').textContent = sessionSteps;
+    $('tkm').textContent = km(s.totalM);
+
+    const pend = s.daySteps >= GOAL && !s.claimed.steps;
+    $('mdot').hidden = !pend;
+
+    renderCatScene(false);
+    if (cur === 'actividad') renderAct();
+    if (cur === 'misiones') renderMs();
+    if (cur === 'hogar') renderHome();
+  }
+
+  /* ---- 2. ACTIVIDAD ---- */
+  function renderAct() {
+    const r = range(aN);
+    const p = Math.min(1, r.st / (GOAL * aN));
+    $('rp').style.strokeDasharray = (377 * p) + ' 503';
+    $('asteps').textContent = nf(r.st);
+    $('apct').textContent = Math.round(p * 100) + '% del objetivo';
+    $('akm').textContent = km(r.m);
+    $('akcal').textContent = Math.round(r.st * 0.04) + ' kcal';
+    $('amin').textContent = r.mi + ' min';
+
+    let bars, lab;
+    if (aN === 1) {
+      bars = s.hours.slice(6, 22);
+      lab = (i) => (i % 3 === 0 ? String(i + 6) : '');
+    } else {
+      bars = r.arr.map((a) => a[0]);
+      lab = (i) => (aN === 7
+        ? 'DLMXJVS'.charAt(r.arr[i][1].getDay())
+        : (i % 5 === 0 ? String(r.arr[i][1].getDate()) : ''));
+    }
+    const mx = Math.max(...bars, 1);
+    $('achart').innerHTML = '<div class="bars">' + bars.map((v, i) =>
+      '<div><div class="b"><i style="height:' + Math.max(5, v / mx * 100) + '%"></i></div><span>' + lab(i) + '</span></div>'
+    ).join('') + '</div>';
+  }
+
+  /* ---- 5. MISIONES Y LOGROS ---- */
+  function habitRow(id, icn, title, sub, done, extraBtn) {
+    return '<div class="card mrow">' +
+      '<span class="ic">' + ic(icn) + '</span>' +
+      '<div class="mbody">' +
+        '<div class="mtitle"><b>' + title + '</b><span>+15 🪙 · +30 XP</span></div>' +
+        '<div class="trk"><i style="width:' + (done ? 100 : 0) + '%"></i></div>' +
+        '<div class="msub"><span>' + sub + '</span></div>' +
+      '</div>' +
+      (extraBtn || '') +
+      '<button class="mchk' + (done ? ' done' : '') + '" data-habit="' + id + '" aria-label="Completar ' + title + '">' + ic('ok') + '</button>' +
+    '</div>';
+  }
+
+  function autoMissionRow(icn, title, reward, curVal, goalVal, labelVal) {
+    const pct = Math.min(100, Math.round(curVal / goalVal * 100));
+    const done = curVal >= goalVal;
+    return '<div class="card mrow">' +
+      '<span class="ic">' + ic(icn) + '</span>' +
+      '<div class="mbody">' +
+        '<div class="mtitle"><b>' + title + '</b><span>' + reward + '</span></div>' +
+        '<div class="trk"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="msub"><span>' + labelVal + '</span><span>' + pct + '%</span></div>' +
+      '</div>' +
+      '<div class="mchk' + (done ? ' done' : '') + '">' + ic('ok') + '</div>' +
+    '</div>';
+  }
+
+  function renderMs() {
+    let h = '';
+    if (mT === 'd') {
+      h += autoMissionRow('steps', 'Caminar 5.000 pasos', '+50 🪙 · +100 XP', s.daySteps, GOAL, nf(s.daySteps) + ' / 5.000');
+      h += autoMissionRow('game', 'Jugar con tu gato 3 veces', '+30 XP', s.plays, 3, Math.min(3, s.plays) + ' / 3');
+      h += autoMissionRow('bowl', 'Alimentar a tu gato 3 veces', '+20 🪙 · +30 XP', s.feeds, 3, Math.min(3, s.feeds) + ' / 3');
+
+      h += habitRow('read', 'book', 'Leer 15 minutos', s.habits.read ? '15 / 15 min' : '0 / 15 min', s.habits.read);
+      h += habitRow('workout', 'gym', 'Entrenar 30 minutos', s.habits.workout ? '30 / 30 min' : '0 / 30 min', s.habits.workout);
+
+      const wDone = s.habits.water >= 8;
+      const wPct = Math.min(100, Math.round(s.habits.water / 8 * 100));
+      h += '<div class="card mrow">' +
+        '<span class="ic">' + ic('drop') + '</span>' +
+        '<div class="mbody">' +
+          '<div class="mtitle"><b>Tomar agua (8 vasos)</b><span>+15 🪙 · +30 XP</span></div>' +
+          '<div class="trk"><i style="width:' + wPct + '%"></i></div>' +
+          '<div class="msub"><span>' + s.habits.water + ' / 8 vasos</span></div>' +
+        '</div>' +
+        (!wDone ? '<button class="mplus" data-water="1">+1 vaso</button>' : '') +
+        '<button class="mchk' + (wDone ? ' done' : '') + '" data-habit="water" aria-label="Completar agua">' + ic('ok') + '</button>' +
+      '</div>';
+
+      h += habitRow('sleep', 'bed', 'Dormir bien (≥ 7 horas)', s.habits.sleep ? '7 / 7 horas' : 'Pendiente', s.habits.sleep);
+    } else if (mT === 's') {
+      const w = range(7);
+      h += autoMissionRow('steps', 'Caminar 30.000 pasos', 'Semanal', w.st, 30000, nf(w.st) + ' / 30.000');
+      h += autoMissionRow('pin', 'Recorrer 15 km', 'Semanal', w.m, 15000, km(w.m) + ' / 15,0 km');
+    } else if (mT === 'l') {
+      const lvl = Math.floor(s.xp / 500) + 1;
+      const xpInLvl = s.xp % 500;
+      const rank = RANGOS[Math.min(RANGOS.length - 1, lvl - 1)];
+      h += '<div class="card lvl-card">' +
+        '<div class="medal-wrap"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="36" fill="#f7b93b" stroke="#d9921e" stroke-width="4"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff3c4" stroke-width="1.5" opacity=".7"/><path d="M16 72 Q6 50 18 28 M84 72 Q94 50 82 28" fill="none" stroke="#d4a359" stroke-width="3.5" stroke-linecap="round"/><circle cx="39" cy="46" r="3.5" fill="#9c6314"/><circle cx="46" cy="39" r="3.5" fill="#9c6314"/><circle cx="54" cy="39" r="3.5" fill="#9c6314"/><circle cx="61" cy="46" r="3.5" fill="#9c6314"/><path d="M50 48c-5 0-9 4.5-9 8 0 2.5 2.2 3.5 4.5 3.5 1.5 0 2.5-.6 4.5-.6s3 .6 4.5.6c2.3 0 4.5-1 4.5-3.5 0-3.5-4-8-9-8z" fill="#9c6314"/></svg></div>' +
+        '<h2>Nivel ' + lvl + '</h2>' +
+        '<div class="rank">' + rank + '</div>' +
+        '<div class="trk"><i style="width:' + (xpInLvl / 500 * 100) + '%"></i></div>' +
+        '<small>' + xpInLvl + ' / 500 XP</small>' +
+      '</div>';
+
+      const ach = [
+        { t: 'Primeros pasos', d: 'Caminá 1.000 pasos en total', cur: s.totalSteps, goal: 1000, ico: 'paw' },
+        { t: 'Caminante',      d: 'Caminá 10.000 pasos en total', cur: s.totalSteps, goal: 10000, ico: 'star' },
+        { t: 'Maratonista',    d: 'Caminá 50.000 pasos en total', cur: s.totalSteps, goal: 50000, ico: 'star' },
+        { t: 'Compañero fiel', d: 'Alimentá a tu gato 20 veces', cur: s.totalFeeds, goal: 20, ico: 'star' },
+        { t: 'Coleccionista',  d: 'Adoptá 3 gatitos', cur: s.cats.length, goal: 3, ico: 'star' }
+      ];
+      ach.forEach((a) => {
+        const pc = Math.min(100, Math.round(a.cur / a.goal * 100));
+        const done = pc >= 100;
+        h += '<div class="card mrow">' +
+          '<span class="ic" style="background:rgba(247,185,59,.18)">' + ic(a.ico) + '</span>' +
+          '<div class="mbody">' +
+            '<div class="mtitle"><b>' + a.t + '</b><span>' + (done ? 'Completado' : pc + '%') + '</span></div>' +
+            '<div class="msub" style="margin-top:0;margin-bottom:5px"><span>' + a.d + '</span></div>' +
+            '<div class="trk"><i style="width:' + pc + '%"></i></div>' +
+          '</div>' +
+          '<div class="mchk' + (done ? ' done' : '') + '">' + ic('ok') + '</div>' +
+        '</div>';
+      });
+    }
+    $('mlist').innerHTML = h;
+  }
+
+  $('mlist').onclick = function (e) {
+    const wb = e.target.closest('[data-water]');
+    if (wb) {
+      rollDay();
+      if (s.habits.water < 8) {
+        s.habits.water++;
+        SFX.tap();
+        if (s.habits.water === 8 && !s.claimed.water) {
+          s.claimed.water = true;
+          s.coins += 15;
+          addXp(30);
+          SFX.win();
+          say('💧 ¡8 vasos completados! +15 monedas y +30 XP');
+        } else {
+          say('💧 Vaso ' + s.habits.water + ' de 8 registrado');
+        }
+        save();
+        renderMs();
+        render();
+      }
+      return;
+    }
+    const hb = e.target.closest('[data-habit]');
+    if (hb) {
+      rollDay();
+      const k = hb.dataset.habit;
+      if (k === 'water') {
+        if (s.habits.water < 8) {
+          s.habits.water = 8;
+          if (!s.claimed.water) {
+            s.claimed.water = true;
+            s.coins += 15;
+            addXp(30);
+            SFX.win();
+            say('💧 ¡Hábito completado! +15 monedas y +30 XP');
+          }
+        } else {
+          s.habits.water = 0;
+          SFX.tap();
+        }
+      } else {
+        if (!s.habits[k]) {
+          s.habits[k] = true;
+          if (!s.claimed[k]) {
+            s.claimed[k] = true;
+            s.coins += 15;
+            addXp(30);
+            SFX.win();
+            say('✨ ¡Misión cumplida! +15 monedas y +30 XP');
+          }
+        } else {
+          s.habits[k] = false;
+          SFX.tap();
+        }
+      }
+      save();
+      renderMs();
+      render();
+    }
+  };
+
+  /* ---- 3. CATÁLOGO DE 6 GATITOS ---- */
+  function faceSvg(k) {
+    const c = CATS[k];
+    const eyeStroke = c.yellowEye ? '#d4a32c' : c.eye;
+    const eyes = c.yellowEye
+      ? '<circle cx="36" cy="52" r="5.5" fill="#f2b705"/><circle cx="64" cy="52" r="5.5" fill="#f2b705"/><circle cx="36" cy="52" r="2.2" fill="#222"/><circle cx="64" cy="52" r="2.2" fill="#222"/>'
+      : '<circle cx="36" cy="52" r="4.2" fill="' + c.eye + '"/><circle cx="37.4" cy="50.6" r="1.4" fill="#fff"/><circle cx="64" cy="52" r="4.2" fill="' + c.eye + '"/><circle cx="65.4" cy="50.6" r="1.4" fill="#fff"/>';
+    const fluff = c.fluffy
+      ? '<circle cx="15" cy="56" r="9" fill="' + c.fur + '"/><circle cx="85" cy="56" r="9" fill="' + c.fur + '"/><circle cx="24" cy="72" r="9" fill="' + c.fur + '"/><circle cx="76" cy="72" r="9" fill="' + c.fur + '"/>'
+      : '';
+    const stripes = c.tabby
+      ? '<path d="M44 25v8M50 24v10M56 25v8" stroke="' + c.p2 + '" stroke-width="2.5" stroke-linecap="round"/>'
+      : '';
+    const bow = c.bow
+      ? '<path d="M28 24l-11-7v15zM28 24l11-7v15z" fill="#f2678f"/><circle cx="28" cy="24" r="3.8" fill="#d94a76"/>'
+      : '';
+
+    return '<svg viewBox="0 0 100 90">' +
+      '<path d="M14 48L18 13L43 31ZM86 48L82 13L57 31Z" fill="' + (c.calico3 ? c.p1 : c.fur) + '"/>' +
+      '<path d="M21 37L23 21L34 30ZM79 37L77 21L66 30Z" fill="#f6a5b0"/>' +
+      fluff +
+      '<ellipse cx="50" cy="55" rx="38" ry="31" fill="' + c.fur + '"/>' +
+      '<ellipse cx="30" cy="38" rx="11" ry="8" fill="' + c.p1 + '"/>' +
+      (k === 'yuyi' || k === 'mochi' ? '<ellipse cx="70" cy="39" rx="10" ry="7" fill="' + c.p2 + '"/>' : '') +
+      stripes + bow +
+      '<ellipse cx="50" cy="65" rx="21" ry="14" fill="' + c.face + '"/>' +
+      eyes +
+      '<circle cx="27" cy="61" r="4.5" fill="#ff9aa8" opacity=".45"/>' +
+      '<circle cx="73" cy="61" r="4.5" fill="#ff9aa8" opacity=".45"/>' +
+      '<path d="M46.5 58h7l-3.5 4.5z" fill="#f08a9a"/>' +
+      '<path d="M50 62.5q-4 5-8 2M50 62.5q4 5 8 2" fill="none" stroke="' + eyeStroke + '" stroke-width="2.1" stroke-linecap="round"/>' +
+    '</svg>';
+  }
+
+  function renderCats() {
+    $('cats').innerHTML = Object.keys(CATS).map((k) => {
+      const c = CATS[k];
+      const unlocked = s.cats.indexOf(k) > -1;
+      const active = s.cat === k;
+      const lvl = s.catLevels[k] || 1;
+      const badge = unlocked
+        ? (active ? '<span style="background:var(--ac);color:var(--on);border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:.8rem">✓</span>' : '')
+        : ic('lock');
+      const sub = unlocked
+        ? 'Nivel ' + lvl
+        : '<span class="ic">' + ic(c.curr === 'g' ? 'gem' : 'coin') + '</span>' + c.cost;
+
+      return '<button class="cc' + (active ? ' on' : '') + (unlocked ? '' : ' lk') + '" data-cat="' + k + '">' +
+        faceSvg(k) +
+        '<b>' + c.name + '</b>' +
+        '<small>' + sub + '</small>' +
+        '<span class="bd ic">' + badge + '</span>' +
+      '</button>';
+    }).join('');
+  }
+
+  let pendingCat = null;
+  $('cats').onclick = function (e) {
+    const b = e.target.closest('.cc');
+    if (!b) return;
+    SFX.tap();
+    const k = b.dataset.cat;
+    const c = CATS[k];
+    if (s.cats.indexOf(k) < 0) {
+      const cu = c.curr === 'g' ? 'gems' : 'coins';
+      const nm = cu === 'gems' ? 'gemas' : 'monedas';
+      if (s[cu] < c.cost) {
+        say('Te faltan ' + Math.ceil(c.cost - s[cu]) + ' ' + nm + ' para adoptar a ' + c.name);
+        return;
+      }
+      pendingCat = k;
+      $('m-title').textContent = 'Adoptar a ' + c.name;
+      $('m-desc').textContent = '¿Querés adoptar a ' + c.name + ' por ' + c.cost + ' ' + nm + '?';
+      $('modal').classList.add('open');
+      return;
+    }
+    setCat(k);
+    s.name = c.name;
+    $('nameIn').value = c.name;
+    save();
+    render();
+    renderCats();
+    SFX.meow();
+    setCatState('feliz', 2500);
+    say('Ahora estás con ' + c.name + ' 🐾');
+  };
+
+  $('m-no').onclick = function () {
+    SFX.tap();
+    $('modal').classList.remove('open');
+    pendingCat = null;
+  };
+  $('m-yes').onclick = function () {
+    $('modal').classList.remove('open');
+    if (!pendingCat) return;
+    const k = pendingCat;
+    const c = CATS[k];
+    const cu = c.curr === 'g' ? 'gems' : 'coins';
+    if (s[cu] >= c.cost) {
+      s[cu] -= c.cost;
+      s.cats.push(k);
+      setCat(k);
+      s.name = c.name;
+      $('nameIn').value = c.name;
+      save();
+      render();
+      renderCats();
+      SFX.win();
+      setCatState('feliz', 3000);
+      say('¡' + c.name + ' se unió a tu familia! 🎉');
+    }
+    pendingCat = null;
+  };
+
+  function setCat(k) {
+    s.cat = k;
+    document.documentElement.dataset.cat = k;
+  }
+
+  /* ---- 4. MI HOGAR (SINCRONIZADO CON INICIO) ---- */
+  function renderHome() {
+    $('hscene').innerHTML = buildSceneSVG({
+      mode: 'room',
+      state: 'idle',
+      catId: s.cat,
+      bed: s.home.bed,
+      mueble: s.home.mueble,
+      deco: s.home.deco,
+      piso: s.home.piso
+    });
+
+    const list = HOME_OPTS[hK];
+    $('hopts').innerHTML = list.map((item) => {
+      const active = s.home[hK] === item.id;
+      const visual = item.color
+        ? '<span class="swatch" style="background:' + item.color + '"></span>'
+        : '<span class="ic" style="font-size:1.5rem;color:var(--ac)">' + ic(hK === 'mueble' ? 'sofa' : 'sparkle') + '</span>';
+      return '<button class="hopt' + (active ? ' on' : '') + '" data-v="' + item.id + '">' +
+        '<span class="chk-mini">✓</span>' +
+        visual +
+        '<span>' + item.label + '</span>' +
+      '</button>';
+    }).join('');
+  }
+
+  function applyHome() {
+    const d = document.documentElement.dataset;
+    d.bed = s.home.bed;
+    d.deco = s.home.deco;
+    d.mueble = s.home.mueble;
+    d.piso = s.home.piso;
+  }
+
+  $('hseg').onclick = function (e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    SFX.tap();
+    hK = b.dataset.k;
+    Array.from($('hseg').children).forEach((x) => x.classList.toggle('on', x === b));
+    renderHome();
+  };
+
+  $('hopts').onclick = function (e) {
+    const b = e.target.closest('.hopt');
+    if (!b) return;
+    SFX.tap();
+    s.home[hK] = b.dataset.v;
+    applyHome();
+    save();
+    renderHome();
+    renderCatScene(true);
+  };
+
+  /* ---- 7. TEMAS, SONIDO Y AJUSTES ---- */
+  function acc() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--ac').trim();
+  }
+  function setTheme(t) {
+    s.theme = t;
+    document.documentElement.dataset.theme = t;
+    save();
+    renderCatScene(true);
+    if (cur === 'hogar') renderHome();
+    if (map) {
+      setTiles();
+      line.setStyle({ color: acc() });
+    }
+  }
+
+  function syncSoundUI() {
+    const on = !!s.sound;
+    const b1 = $('sndbtn');
+    if (b1) {
+      b1.classList.toggle('muted', !on);
+      b1.innerHTML = '<span class="ic">' + ic(on ? 'vol' : 'mute') + '</span>';
+    }
+    const b2 = $('sndtoggle2');
+    if (b2) {
+      b2.innerHTML = '<span class="ic">' + ic(on ? 'vol' : 'mute') + '</span><span id="sndlbl">Sonido: ' + (on ? 'ON' : 'OFF') + '</span>';
+    }
+  }
+
+  function toggleSound() {
+    s.sound = !s.sound;
+    save();
+    syncSoundUI();
+    if (s.sound) {
+      SFX.unlock();
+      SFX.meow();
+      say('Sonido activado 🔊');
+    } else {
+      say('Sonido silenciado 🔇');
+    }
+  }
+
+  $('sndbtn').onclick = toggleSound;
+  $('sndtoggle2').onclick = toggleSound;
+  $('sndtest').onclick = function () {
+    SFX.unlock();
+    if (!s.sound) {
+      s.sound = true;
+      save();
+      syncSoundUI();
+    }
+    SFX.meow();
+    setCatState('feliz', 2500);
+    say('¡Miau! 🐾');
+  };
+
+  function renderSet() {
+    syncSoundUI();
+    $('themes').innerHTML = Object.keys(TH).map((k) => {
+      const t = TH[k];
+      return '<button class="sw' + (s.theme === k ? ' on' : '') + '" data-t="' + k + '"><i><b style="background:' + t[2] + '"></b><b style="background:' + t[1] + '"></b></i>' + t[0] + '</button>';
+    }).join('');
+  }
+  $('themes').onclick = function (e) {
+    const b = e.target.closest('.sw');
+    if (b) {
+      SFX.tap();
+      setTheme(b.dataset.t);
+      renderSet();
+    }
+  };
+  $('nameIn').value = s.name;
+  $('nameIn').oninput = function () {
+    s.name = this.value || 'Yuyi';
+    save();
+    render();
+  };
+
+  /* ---- NAVEGACIÓN DE PESTAÑAS ---- */
+  function tab(n) {
+    cur = n;
+    document.querySelectorAll('.tab').forEach((e) => e.classList.toggle('on', e.id === 't-' + n));
+    const nb = n === 'caminar' ? 'actividad' : n === 'ajustes' ? 'inicio' : n;
+    document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === nb));
+    window.scrollTo(0, 0);
+    if (n === 'actividad') renderAct();
+    if (n === 'gatitos') renderCats();
+    if (n === 'hogar') renderHome();
+    if (n === 'misiones') renderMs();
+    if (n === 'ajustes') renderSet();
+    if (n === 'caminar') {
+      drawMap();
+      setTimeout(() => {
+        if (map) {
+          map.invalidateSize();
+          lastLen = -1;
+          drawMap();
+        }
+      }, 80);
+    }
+  }
+  $('nav').onclick = function (e) {
+    const b = e.target.closest('button');
+    if (b) {
+      SFX.tab();
+      tab(b.dataset.tab);
+    }
+  };
+  $('gear').onclick = () => { SFX.tap(); tab('ajustes'); };
+  $('back').onclick = () => { SFX.tap(); tab('actividad'); };
+  $('back2').onclick = () => { SFX.tap(); tab('inicio'); };
+  $('openmap').onclick = () => { SFX.tap(); tab('caminar'); };
+  $('aseg').onclick = function (e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    SFX.tap();
+    aN = +b.dataset.n;
+    Array.from($('aseg').children).forEach((x) => x.classList.toggle('on', x === b));
+    renderAct();
+  };
+  $('mseg').onclick = function (e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    SFX.tap();
+    mT = b.dataset.m;
+    Array.from($('mseg').children).forEach((x) => x.classList.toggle('on', x === b));
+    renderMs();
+  };
+
+  /* ---- 6. MAPA LEAFLET ---- */
+  function setTiles() {
+    if (!map) return;
+    const dark = s.theme === 'noche' || s.theme === 'luna';
+    if (tiles) map.removeLayer(tiles);
+    tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: dark ? 'dark-tiles' : 'pastel-tiles',
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  }
+  function initMap() {
+    if (map || !window.L) return;
+    map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 16);
+    setTiles();
+    line = L.polyline([], { color: acc(), weight: 9, opacity: 1, lineCap: 'round', dashArray: '0 16' }).addTo(map);
+  }
+  function drawMap() {
+    initMap();
+    if (!map) return;
+    $('empty').hidden = route.length > 0;
+    line.setLatLngs(route);
+    if (startM) { map.removeLayer(startM); startM = null; }
+    if (endM) { map.removeLayer(endM); endM = null; }
+    if (!route.length) return;
+    const e = route[route.length - 1];
+    startM = L.circleMarker(route[0], { radius: 7, color: '#fff', weight: 3, fillColor: '#3a2a2a', fillOpacity: 1 }).addTo(map);
+    endM = L.marker(e, {
+      icon: L.divIcon({ className: '', html: '<div class="mochi-pin">🐾</div>', iconSize: [34, 34], iconAnchor: [17, 17] }),
+      interactive: false,
+      keyboard: false
+    }).addTo(map);
+    if (route.length !== lastLen) {
+      lastLen = route.length;
+      if (route.length > 1) map.fitBounds(line.getBounds(), { padding: [40, 40], maxZoom: 18 });
+      else map.setView(e, 17);
+    }
+  }
+  window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
+
+  /* ---- GPS Y PODÓMETRO ---- */
+  function setGps(st, t) {
+    gpsState = st;
+    const g = $('gps');
+    g.className = 'gps ' + st;
+    g.querySelector('span').textContent = t;
+    $('help').hidden = st !== 'err';
+    if (st === 'err') {
+      const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      $('hsteps').innerHTML = ios
+        ? '<li>Abrí Ajustes › Privacidad y seguridad › Localización y activala.</li><li>Bajá hasta Safari y elegí «Al usar la app».</li><li>Volvé acá y tocá Reintentar.</li>'
+        : '<li>Activá la Ubicación desde el panel de arriba de tu celular.</li><li>Tocá el candado junto a la dirección › Permisos › Ubicación › Permitir.</li><li>Volvé acá y tocá Reintentar.</li>';
+    }
+  }
+  function hav(a, b) {
+    const R = 6371000;
+    const t = (x) => x * Math.PI / 180;
+    const dLa = t(b.latitude - a.latitude);
+    const dLo = t(b.longitude - a.longitude);
+    const h = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(t(a.latitude)) * Math.cos(t(b.latitude)) * Math.sin(dLo / 2) * Math.sin(dLo / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function addDist(m) {
+    decay();
+    rollDay();
+    s.full = Math.min(100, s.full + m / 100 * 4);
+    s.totalM += m;
+    s.dayM += m;
+    session += m;
+    save();
+    render();
+    setCatState('caminar', 4000);
+  }
+  function onPos(p) {
+    const c = p.coords;
+    if (c.accuracy > 30) {
+      setGps('search', 'Buscando señal…');
+      $('msg').textContent = 'Buscando mejor señal de GPS (±' + Math.round(c.accuracy) + ' m)…';
+      return;
+    }
+    setGps('on', 'GPS activo · grabando recorrido');
+    $('msg').textContent = 'Precisión ±' + Math.round(c.accuracy) + ' m';
+    if (last) {
+      const d = hav(last, c);
+      if (d >= Math.max(5, c.accuracy * 0.5) && d < 100) {
+        route.push([c.latitude, c.longitude]);
+        lastGpsMove = Date.now();
+        addDist(d);
+        last = c;
+        drawMap();
+      } else if (d >= 100) {
+        last = c;
+      }
+    } else {
+      last = c;
+      route = [[c.latitude, c.longitude]];
+      drawMap();
+    }
+  }
+  function onErr(e) {
+    setGps('err', e.code === 1 ? 'Sin permiso de ubicación' : 'GPS no disponible');
+    stop();
+  }
+  /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
+  const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+  const BG = NATIVE ? Capacitor.registerPlugin('BackgroundGeolocation') : null;
+  let nativeP = null;
+  function startNative() {
+    watching = 'native';
+    nativeP = BG.addWatcher(
+      { backgroundTitle: 'Mi Gato', backgroundMessage: 'Mochi está contando tu recorrido', requestPermissions: true, stale: false, distanceFilter: 3 },
+      function (loc, err) {
+        if (err) {
+          if (err.code === 'NOT_AUTHORIZED' && confirm('Mi Gato necesita permiso de ubicación (ideal: «Permitir siempre»). ¿Abrir los ajustes?')) BG.openSettings();
+          onErr({ code: err.code === 'NOT_AUTHORIZED' ? 1 : 2 });
+          return;
+        }
+        onPos({ coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy || 20 } });
+      }
+    );
+  }
+  function start() {
+    if (!NATIVE && !navigator.geolocation) {
+      setGps('err', 'Sin GPS en este navegador');
+      return;
+    }
+    session = 0;
+    sessionSteps = 0;
+    accM = 0;
+    last = null;
+    route = [];
+    startSteps();
+    save();
+    render();
+    drawMap();
+    if (NATIVE) startNative();
+    else watching = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 2000 });
+    $('go').textContent = 'Terminar salida';
+    setGps('search', 'Esperando señal…');
+    $('msg').textContent = 'Esperando señal de GPS…';
+    setCatState('caminar');
+  }
+  function stop() {
+    if (watching !== null) {
+      if (NATIVE) { const p = nativeP; nativeP = null; if (p) p.then(function (id) { BG.removeWatcher({ id: id }); }); }
+      else navigator.geolocation.clearWatch(watching);
+    }
+    watching = null;
+    last = null;
+    stopSteps();
+    $('go').textContent = 'Empezar salida';
+    if (gpsState !== 'err') setGps('off', 'GPS apagado');
+    setCatState('idle');
+  }
+  $('go').onclick = function () {
+    SFX.tap();
+    if (watching === null) start();
+    else {
+      stop();
+      SFX.win();
+      say('Salida guardada: ' + Math.round(session) + ' m · ' + sessionSteps + ' pasos');
+    }
+  };
+  $('retry').onclick = function () {
+    SFX.tap();
+    setGps('off', 'GPS apagado');
+    start();
+  };
+  $('walk').onclick = function () {
+    SFX.tap();
+    tab('caminar');
+    if (watching === null) start();
+  };
+  $('sim').onclick = function () {
+    SFX.step();
+    let p = route.length ? route[route.length - 1].slice() : (last ? [last.latitude, last.longitude] : [-34.6037, -58.3816]);
+    if (!route.length) route.push(p.slice());
+    for (let i = 0; i < 10; i++) {
+      const a = route.length * 0.18;
+      p = [p[0] + 0.00045 * Math.cos(a), p[1] + 0.00054 * Math.sin(a)];
+      route.push(p.slice());
+      rollDay();
+      s.daySteps += 67;
+      s.totalSteps += 67;
+      s.coins += 6.7;
+      s.hours[new Date().getHours()] += 67;
+      s.dayMin++;
+      sessionSteps += 67;
+      addDist(50);
+    }
+    addXp(25);
+    checkGoal();
+    save();
+    render();
+    drawMap();
+    if (watching === null) setGps('on', 'Modo prueba (sin GPS)');
+    say('Sumaste 500 m y +25 XP de prueba');
+  };
+
+  function onStep() {
+    rollDay();
+    const n = Date.now();
+    const mi = Math.floor(n / 60000);
+    s.daySteps++;
+    s.totalSteps++;
+    s.coins += 0.1;
+    sessionSteps++;
+    s.hours[new Date().getHours()]++;
+    SFX.step();
+    if (mi !== lastMin) {
+      lastMin = mi;
+      s.dayMin++;
+    }
+    if (n - lastGpsMove > 8000) {
+      accM += 0.7;
+      if (accM >= 5) {
+        addDist(accM);
+        accM = 0;
+      }
+    }
+    checkGoal();
+    if (sessionSteps % 15 === 0) save();
+    render();
+  }
+  function onMotion(e) {
+    const a = e.accelerationIncludingGravity;
+    if (!a || a.x == null) return;
+    const m = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    gv = gv * 0.9 + m * 0.1;
+    const d = m - gv;
+    const now = Date.now();
+    if (d > 1.3) {
+      if (!above && now - lastStep > 280) {
+        lastStep = now;
+        onStep();
+      }
+      above = true;
+    } else if (d < 0.5) {
+      above = false;
+    }
+  }
+  function startSteps() {
+    if (motionOn || !window.DeviceMotionEvent) return;
+    const go = () => {
+      window.addEventListener('devicemotion', onMotion);
+      motionOn = true;
+    };
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then((x) => { if (x === 'granted') go(); }).catch(() => {});
+    } else {
+      go();
+    }
+  }
+  function stopSteps() {
+    window.removeEventListener('devicemotion', onMotion);
+    motionOn = false;
+    save();
+  }
+
+  /* ---- ALIMENTAR, JUGAR Y ANIMACIONES DEL PERSONAJE ---- */
+  function playWithCat() {
+    decay();
+    rollDay();
+    if (s.energy < 10) {
+      setCatState('dormir', 4000);
+      SFX.tap();
+      say('Tu gatito tiene sueño 😴 Dejalo descansar un ratito');
+      return;
+    }
+    s.mood = Math.min(100, s.mood + 12);
+    s.energy = Math.max(10, s.energy - 6);
+    s.plays++;
+    s.totalPlays++;
+    setCatState('feliz', 3200);
+    SFX.meow();
+
+    /* Otorga +30 XP una sola vez al día al completar las 3 interacciones diarias */
+    if (s.plays >= 3 && !s.claimed.playDaily) {
+      s.claimed.playDaily = true;
+      addXp(30);
+      SFX.win();
+      save();
+      render();
+      say('¡Misión diaria de juego cumplida! +30 XP 🎉');
+      return;
+    }
+    save();
+    render();
+    say(['¡Miau! 🐾', '¡Qué lindo! 💕', 'Mrrr 😻'][Math.floor(Math.random() * 3)]);
+  }
+
+  $('feed').onclick = function () {
+    if (s.coins < 20) {
+      SFX.tap();
+      say('Necesitás 20 monedas. ¡Caminá o completá misiones!');
+      return;
+    }
+    decay();
+    rollDay();
+    s.coins -= 20;
+    s.full = Math.min(100, s.full + 22);
+    s.mood = Math.min(100, s.mood + 5);
+    s.feeds++;
+    s.totalFeeds++;
+    addXp(20);
+    if (s.feeds >= 3 && !s.claimed.feedDaily) {
+      s.claimed.feedDaily = true;
+      s.coins += 20;
+      addXp(30);
+      SFX.win();
+      say('¡Misión diaria de comida! +20 monedas y +30 XP 🎉');
+    } else {
+      say('¡Ñam ñam! 🥣 +20 XP');
+    }
+    setCatState('comer', 3600);
+    SFX.eat();
+    save();
+    render();
+  };
+
+  $('playbtn').onclick = playWithCat;
+  $('catbox').onclick = playWithCat;
+
+  $('hscene').onclick = function () {
+    SFX.meow();
+    const hsvg = $('hcat');
+    if (hsvg) {
+      hsvg.setAttribute('data-state', 'feliz');
+      setTimeout(() => { if ($('hcat')) $('hcat').setAttribute('data-state', 'idle'); }, 2400);
+    }
+    say('¡Miau! 🐾');
+  };
+
+  let hid = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      hid = Date.now();
+    } else if (hid && Date.now() - hid > 20000) {
+      tab('inicio');
+      setCatState(s.energy < 35 ? 'dormir' : 'idle');
+    }
+  });
+
+  if (s.cats.indexOf(s.cat) < 0) s.cat = 'yuyi';
+  setTheme(s.theme);
+  setCat(s.cat);
+  applyHome();
+  syncSoundUI();
+  render();
+  setCatState(s.energy < 35 ? 'dormir' : 'idle');
+  startBlinkLoop();
+  setInterval(render, 30000);
+})();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+</body>
+</html>
