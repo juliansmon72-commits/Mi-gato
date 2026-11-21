@@ -2498,7 +2498,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   }
   /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
   const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
-  const BG = NATIVE ? Capacitor.registerPlugin('BackgroundGeolocation') : null;
+  const BG = NATIVE ? ((Capacitor.Plugins && Capacitor.Plugins.BackgroundGeolocation) || (typeof Capacitor.registerPlugin === 'function' ? Capacitor.registerPlugin('BackgroundGeolocation') : null)) : null;
   let nativeP = null;
   function startNative() {
     watching = 'native';
@@ -2512,7 +2512,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       nativeP = null;
       watching = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 2000 });
     };
-    nativeP = BG.addWatcher(
+    nativeP = Promise.resolve(BG.addWatcher(
       { backgroundTitle: 'Mi Gato', backgroundMessage: 'Mochi está contando tu recorrido', requestPermissions: true, stale: false, distanceFilter: 3 },
       function (loc, err) {
         n++;
@@ -2523,7 +2523,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
         }
         onPos({ coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy || 20 } });
       }
-    );
+    ));
     nativeP.catch(function (e) { fallback('error: ' + ((e && e.message) || e)); });
     setTimeout(function () { if (n === 0) fallback('sin datos en 10 s'); }, 10000);
   }
@@ -2542,7 +2542,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     save();
     render();
     drawMap();
-    if (NATIVE) startNative();
+    if (NATIVE && BG) startNative();
     else watching = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 2000 });
     $('go').textContent = 'Terminar salida';
     setGps('search', 'Esperando señal…');
