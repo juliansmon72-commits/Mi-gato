@@ -1469,7 +1469,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
 
   const $ = (i) => document.getElementById(i);
   let watching = null, last = null, session = 0, sessionSteps = 0, accM = 0, lastGpsMove = 0;
-  let sessionStartT = 0, scOk = false, scBusy = false, scLast = 0, scWarned = false, wKey = '';
+  let sessionStartT = 0, scOk = false, scBusy = false, scLast = 0, scWarned = false, wKey = '', accCount = 0;
   let motionOn = false, above = false, lastStep = 0, lastMin = -1, gv = 9.8, gpsState = 'off';
   let cur = 'inicio', aN = 1, mT = 'd', hK = 'mueble';
   let map = null, line = null, startM = null, endM = null, tiles = null, lastLen = -1, tt;
@@ -2518,7 +2518,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
   const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
   const BG = NATIVE ? ((Capacitor.Plugins && Capacitor.Plugins.BackgroundGeolocation) || (typeof Capacitor.registerPlugin === 'function' ? Capacitor.registerPlugin('BackgroundGeolocation') : null)) : null;
-  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v4 · ' + (NATIVE ? 'app' : 'web') + ' · gps ' + (BG ? 'ok' : 'no') + ' · pasos ' + (NATIVE && Capacitor.Plugins && Capacitor.Plugins.StepCounter ? 'ok' : 'no'); document.body.appendChild(d); })();
+  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v5 · ' + (NATIVE ? 'app' : 'web') + ' · gps ' + (BG ? 'ok' : 'no') + ' · pasos ' + (NATIVE && Capacitor.Plugins && Capacitor.Plugins.StepCounter ? 'ok' : 'no'); document.body.appendChild(d); window.__stampEl = d; })();
   let nativeP = null;
   const SC = NATIVE && Capacitor.Plugins ? Capacitor.Plugins.StepCounter : null;
   function startNative() {
@@ -2649,24 +2649,36 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     save();
     render();
   }
+  function stampSteps(t) {
+    const d = window.__stampEl;
+    if (d) d.textContent = d.textContent.split(' | ')[0] + ' | ' + t;
+  }
   async function syncSteps(force) {
     if (!SC || scBusy) return;
     const now = Date.now();
-    if (!force && now - scLast < 4000) return;
+    if (!force && now - scLast < 2500) return;
     scBusy = true;
     scLast = now;
     try {
       const r = await SC.read();
       const c = Math.floor(r.steps);
       scOk = true;
-      if (s.scBase == null || c < s.scBase) { s.scBase = c; save(); }
-      else if (c > s.scBase) {
+      if (s.scBase == null || c < s.scBase) {
+        s.scBase = c;
+        accCount = 0;
+        save();
+        stampSteps('sensor ' + c + ' (base)');
+      } else {
         const d = c - s.scBase;
         s.scBase = c;
-        if (d < 50000) addSteps(d);
+        const extra = Math.max(0, d - accCount);
+        accCount = Math.max(0, accCount - d);
+        if (extra > 0 && d < 50000) addSteps(extra);
+        stampSteps('sensor ' + c + ' (+' + d + ')');
       }
     } catch (e) {
       const m = (e && e.message) || String(e);
+      stampSteps('sensor error: ' + m);
       if (!scWarned && /PERMISSION/.test(m)) {
         scWarned = true;
         say('Activá el permiso «Actividad física» para contar pasos con la app cerrada');
@@ -2751,7 +2763,8 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     s.daySteps++;
     s.totalSteps++;
     s.coins += 0.1;
-    sessionSteps++;
+    if (watching !== null) sessionSteps++;
+    accCount++;
     s.hours[new Date().getHours()]++;
     SFX.step();
     if (mi !== lastMin) {
@@ -2766,11 +2779,10 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       }
     }
     checkGoal();
-    if (sessionSteps % 15 === 0) save();
+    if (s.daySteps % 15 === 0) save();
     render();
   }
   function onMotion(e) {
-    if (scOk) return;
     const a = e.accelerationIncludingGravity;
     if (!a || a.x == null) return;
     const m = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
@@ -2800,8 +2812,6 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     }
   }
   function stopSteps() {
-    window.removeEventListener('devicemotion', onMotion);
-    motionOn = false;
     save();
   }
 
@@ -2902,7 +2912,9 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   startBlinkLoop();
   setInterval(render, 30000);
   syncSteps(true);
-  setInterval(() => { if (!document.hidden) syncSteps(false); }, 5000);
+  setInterval(() => { if (!document.hidden) syncSteps(false); }, 3000);
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') startSteps();
+  else document.addEventListener('click', () => startSteps(), { once: true });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>

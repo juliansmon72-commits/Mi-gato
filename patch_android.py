@@ -60,6 +60,28 @@ import com.getcapacitor.annotation.PermissionCallback;
 )
 public class StepCounterPlugin extends Plugin {
 
+    private SensorManager sm;
+    private SensorEventListener listener;
+    private volatile float latest = -1f;
+
+    private boolean ensureListener() {
+        if (listener != null) return true;
+        sm = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        Sensor sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        if (sensor == null) return false;
+        listener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                latest = event.values[0];
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+        };
+        sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        return true;
+    }
+
     @PluginMethod
     public void read(PluginCall call) {
         if (Build.VERSION.SDK_INT >= 29 && getPermissionState("activity") != PermissionState.GRANTED) {
@@ -79,39 +101,38 @@ public class StepCounterPlugin extends Plugin {
     }
 
     private void doRead(final PluginCall call) {
-        final SensorManager sm = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
-        final Sensor sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        if (sensor == null) {
+        if (!ensureListener()) {
             call.reject("NO_SENSOR");
             return;
         }
-        final boolean[] done = { false };
-        final SensorEventListener[] listener = new SensorEventListener[1];
+        if (latest >= 0) {
+            JSObject result = new JSObject();
+            result.put("steps", (double) latest);
+            call.resolve(result);
+            return;
+        }
         final Handler handler = new Handler(Looper.getMainLooper());
-        listener[0] = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                if (done[0]) return;
-                done[0] = true;
-                sm.unregisterListener(listener[0]);
-                JSObject result = new JSObject();
-                result.put("steps", (double) event.values[0]);
-                call.resolve(result);
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-        };
-        sm.registerListener(listener[0], sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        final int[] tries = { 0 };
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (done[0]) return;
-                done[0] = true;
-                sm.unregisterListener(listener[0]);
-                call.reject("TIMEOUT");
+                if (latest >= 0) {
+                    JSObject result = new JSObject();
+                    result.put("steps", (double) latest);
+                    call.resolve(result);
+                } else if (++tries[0] >= 20) {
+                    call.reject("TIMEOUT");
+                } else {
+                    handler.postDelayed(this, 200);
+                }
             }
-        }, 4000);
+        }, 200);
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        if (sm != null && listener != null) sm.unregisterListener(listener);
+        super.handleOnDestroy();
     }
 }
 """)
