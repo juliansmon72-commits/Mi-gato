@@ -980,7 +980,9 @@
       transition: none !important;
     }
   }
-</style>
+.walk{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer}
+  .walk .wi{flex:1}.walk small{display:block;color:var(--mute)}
+  </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#fdeee9">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -1077,6 +1079,8 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     <div><span class="ic" data-ic="clock"></span><span id="amin">0 min</span></div>
   </div>
   <div id="achart"></div>
+  <b style="margin-top:6px">Mis salidas</b>
+  <div id="walks"></div>
   <button class="big" id="openmap"><span class="ic" data-ic="pin"></span>Abrir mapa del recorrido</button>
 </section>
 
@@ -1138,7 +1142,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
 <section class="tab" id="t-ajustes">
   <header><button class="ib" id="back2" aria-label="Volver"><span class="ic" data-ic="back"></span></button><h1>Ajustes</h1></header>
   <label for="nameIn"><b>Nombre de tu gato</b></label>
-  <input id="nameIn" maxlength="14">
+  <div style="display:flex;gap:8px"><input id="nameIn" maxlength="14" enterkeyhint="done" style="flex:1"><button class="big" id="nameOk" style="width:auto;padding:12px 18px"><span class="ic" data-ic="ok"></span>Guardar</button></div>
 
   <b style="margin-top:6px">Sonido e interacción</b>
   <div class="two">
@@ -1267,6 +1271,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   const F = {
     coin: '<circle cx="12" cy="12" r="10" fill="#f7a23b"/><circle cx="12" cy="12" r="6" fill="none" stroke="#fff" stroke-width="1.6"/>',
     gem: '<path d="M12 21L3 9l3-5h12l3 5z" fill="#a66ee8"/><path d="M3 9h18M9 4l-2 5 5 12M15 4l2 5-5 12" stroke="#fff" stroke-width="1" fill="none" opacity=".7"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
     star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" fill="#f7b93b"/>'
   };
 
@@ -1440,6 +1445,9 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     cats: ['yuyi'],
     catLevels: { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 },
     home: { bed: 'rosa', deco: 'planta', mueble: 'cama', piso: 'madera' },
+    walks: [],
+    scBase: null,
+    stepAcc: 0,
     name: 'Yuyi'
   };
   let route = [];
@@ -1454,12 +1462,14 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       if (!s.claimed) s.claimed = {};
       if (!s.catLevels) s.catLevels = { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 };
       if (!s.home.piso) s.home.piso = 'madera';
+      if (!Array.isArray(s.walks)) s.walks = [];
     }
     route = JSON.parse(localStorage.getItem(KEY + '-r')) || [];
   } catch (e) {}
 
   const $ = (i) => document.getElementById(i);
   let watching = null, last = null, session = 0, sessionSteps = 0, accM = 0, lastGpsMove = 0;
+  let sessionStartT = 0, scOk = false, scBusy = false, scLast = 0, scWarned = false, wKey = '';
   let motionOn = false, above = false, lastStep = 0, lastMin = -1, gv = 9.8, gpsState = 'off';
   let cur = 'inicio', aN = 1, mT = 'd', hK = 'mueble';
   let map = null, line = null, startM = null, endM = null, tiles = null, lastLen = -1, tt;
@@ -1913,6 +1923,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
 
   /* ---- 2. ACTIVIDAD ---- */
   function renderAct() {
+    renderWalks(false);
     const r = range(aN);
     const p = Math.min(1, r.st / (GOAL * aN));
     $('rp').style.strokeDasharray = (377 * p) + ' 503';
@@ -2336,11 +2347,18 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     }
   };
   $('nameIn').value = s.name;
-  $('nameIn').oninput = function () {
-    s.name = this.value || 'Yuyi';
+  function saveName() {
+    const v = ($('nameIn').value || '').trim() || 'Yuyi';
+    s.name = v;
+    $('nameIn').value = v;
+    $('nameIn').blur();
     save();
     render();
-  };
+    SFX.win();
+    say('¡Listo! Ahora se llama ' + v + ' 🐾');
+  }
+  $('nameOk').onclick = saveName;
+  $('nameIn').onkeydown = (e) => { if (e.key === 'Enter') saveName(); };
 
   /* ---- NAVEGACIÓN DE PESTAÑAS ---- */
   function tab(n) {
@@ -2467,6 +2485,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     setCatState('caminar', 4000);
   }
   function onPos(p) {
+    syncSteps(false);
     const c = p.coords;
     if (c.accuracy > 30) {
       setGps('search', 'Buscando señal…');
@@ -2499,8 +2518,9 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
   const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
   const BG = NATIVE ? ((Capacitor.Plugins && Capacitor.Plugins.BackgroundGeolocation) || (typeof Capacitor.registerPlugin === 'function' ? Capacitor.registerPlugin('BackgroundGeolocation') : null)) : null;
-  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v3 · ' + (NATIVE ? 'app' : 'web') + ' · plugin ' + (BG ? 'ok' : 'no'); document.body.appendChild(d); })();
+  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v4 · ' + (NATIVE ? 'app' : 'web') + ' · gps ' + (BG ? 'ok' : 'no') + ' · pasos ' + (NATIVE && Capacitor.Plugins && Capacitor.Plugins.StepCounter ? 'ok' : 'no'); document.body.appendChild(d); })();
   let nativeP = null;
+  const SC = NATIVE && Capacitor.Plugins ? Capacitor.Plugins.StepCounter : null;
   function startNative() {
     watching = 'native';
     let n = 0, fell = false;
@@ -2537,6 +2557,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     session = 0;
     sessionSteps = 0;
     accM = 0;
+    sessionStartT = Date.now();
     last = null;
     route = [];
     startSteps();
@@ -2568,7 +2589,8 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     else {
       stop();
       SFX.win();
-      say('Salida guardada: ' + Math.round(session) + ' m · ' + sessionSteps + ' pasos');
+      if (saveWalk()) say('Salida guardada: ' + Math.round(session) + ' m · ' + sessionSteps + ' pasos');
+      else say('Salida muy corta: no se guardó');
     }
   };
   $('retry').onclick = function () {
@@ -2607,6 +2629,121 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     say('Sumaste 500 m y +25 XP de prueba');
   };
 
+  /* ---- PASOS NATIVOS: el contador del sistema sigue contando con la app en segundo plano ---- */
+  function addSteps(n) {
+    rollDay();
+    const now = Date.now();
+    s.daySteps += n;
+    s.totalSteps += n;
+    s.coins += 0.1 * n;
+    if (watching !== null) sessionSteps += n;
+    s.hours[new Date().getHours()] += n;
+    s.stepAcc = (s.stepAcc || 0) + n;
+    const mins = Math.floor(s.stepAcc / 100);
+    if (mins > 0) { s.stepAcc -= mins * 100; s.dayMin += mins; }
+    if (now - lastGpsMove > 8000) {
+      accM += 0.7 * n;
+      if (accM >= 5) { addDist(accM); accM = 0; }
+    }
+    checkGoal();
+    save();
+    render();
+  }
+  async function syncSteps(force) {
+    if (!SC || scBusy) return;
+    const now = Date.now();
+    if (!force && now - scLast < 4000) return;
+    scBusy = true;
+    scLast = now;
+    try {
+      const r = await SC.read();
+      const c = Math.floor(r.steps);
+      scOk = true;
+      if (s.scBase == null || c < s.scBase) { s.scBase = c; save(); }
+      else if (c > s.scBase) {
+        const d = c - s.scBase;
+        s.scBase = c;
+        if (d < 50000) addSteps(d);
+      }
+    } catch (e) {
+      const m = (e && e.message) || String(e);
+      if (!scWarned && /PERMISSION/.test(m)) {
+        scWarned = true;
+        say('Activá el permiso «Actividad física» para contar pasos con la app cerrada');
+      }
+    }
+    scBusy = false;
+  }
+
+  /* ---- SALIDAS GUARDADAS ---- */
+  function saveWalk() {
+    const m = Math.round(session);
+    if (m < 20 && sessionSteps < 30) return false;
+    let pts = route;
+    if (pts.length > 600) {
+      const k = Math.ceil(pts.length / 600);
+      pts = pts.filter((_, i) => i % k === 0 || i === pts.length - 1);
+    }
+    const t0 = sessionStartT || Date.now();
+    s.walks.unshift({
+      id: Date.now(), t: t0, dur: Math.round((Date.now() - t0) / 1000), m: m, steps: sessionSteps,
+      r: pts.map((p) => [+p[0].toFixed(5), +p[1].toFixed(5)])
+    });
+    if (s.walks.length > 100) s.walks.length = 100;
+    save();
+    return true;
+  }
+  function wLabel(w) {
+    const d = new Date(w.t), now = new Date(), y = new Date(now.getTime() - 864e5);
+    const day = d.toDateString() === now.toDateString() ? 'Hoy'
+      : d.toDateString() === y.toDateString() ? 'Ayer'
+      : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+    return day + ' · ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+  function renderWalks(force) {
+    const key = s.walks.map((w) => w.id).join(',');
+    if (!force && key === wKey) return;
+    wKey = key;
+    if (!s.walks.length) {
+      $('walks').innerHTML = '<p class="mute">Todavía no hay salidas guardadas. Tocá «Caminar» para empezar.</p>';
+      return;
+    }
+    $('walks').innerHTML = s.walks.map((w) =>
+      '<div class="card walk" data-id="' + w.id + '"><div class="wi"><b>' + wLabel(w) + '</b><small>' +
+      (w.m >= 1000 ? km(w.m) : w.m + ' m') + ' · ' + nf(w.steps) + ' pasos · ' + Math.max(1, Math.round(w.dur / 60)) + ' min</small></div>' +
+      '<button class="ib" data-del="' + w.id + '" aria-label="Borrar salida"><span class="ic">' + ic('trash') + '</span></button></div>'
+    ).join('') + (s.walks.length > 1 ? '<button class="soft" id="walksClear">Borrar todas</button>' : '');
+  }
+  function viewWalk(id) {
+    if (watching !== null) { say('Terminá la salida actual primero'); return; }
+    const w = s.walks.find((x) => String(x.id) === String(id));
+    if (!w) return;
+    route = w.r.slice();
+    lastLen = -1;
+    tab('caminar');
+    drawMap();
+    $('msg').textContent = 'Salida del ' + wLabel(w) + ': ' + (w.m >= 1000 ? km(w.m) : w.m + ' m') + ' · ' + nf(w.steps) + ' pasos';
+  }
+  $('walks').onclick = function (e) {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      SFX.tap();
+      if (confirm('¿Borrar esta salida?')) {
+        s.walks = s.walks.filter((w) => String(w.id) !== del.dataset.del);
+        save();
+        renderWalks(true);
+      }
+      return;
+    }
+    if (e.target.closest('#walksClear')) {
+      SFX.tap();
+      if (confirm('¿Borrar todas las salidas guardadas?')) { s.walks = []; save(); renderWalks(true); }
+      return;
+    }
+    const it = e.target.closest('.walk');
+    if (it) { SFX.tap(); viewWalk(it.dataset.id); }
+  };
+
   function onStep() {
     rollDay();
     const n = Date.now();
@@ -2633,6 +2770,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     render();
   }
   function onMotion(e) {
+    if (scOk) return;
     const a = e.accelerationIncludingGravity;
     if (!a || a.x == null) return;
     const m = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
@@ -2745,9 +2883,12 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       hid = Date.now();
-    } else if (hid && Date.now() - hid > 20000) {
-      tab('inicio');
-      setCatState(s.energy < 35 ? 'dormir' : 'idle');
+    } else {
+      syncSteps(true);
+      if (hid && Date.now() - hid > 20000) {
+        tab('inicio');
+        setCatState(s.energy < 35 ? 'dormir' : 'idle');
+      }
     }
   });
 
@@ -2760,6 +2901,8 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   setCatState(s.energy < 35 ? 'dormir' : 'idle');
   startBlinkLoop();
   setInterval(render, 30000);
+  syncSteps(true);
+  setInterval(() => { if (!document.hidden) syncSteps(false); }, 5000);
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
