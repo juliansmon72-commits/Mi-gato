@@ -2499,6 +2499,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
   const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
   const BG = NATIVE ? ((Capacitor.Plugins && Capacitor.Plugins.BackgroundGeolocation) || (typeof Capacitor.registerPlugin === 'function' ? Capacitor.registerPlugin('BackgroundGeolocation') : null)) : null;
+  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v3 · ' + (NATIVE ? 'app' : 'web') + ' · plugin ' + (BG ? 'ok' : 'no'); document.body.appendChild(d); })();
   let nativeP = null;
   function startNative() {
     watching = 'native';
