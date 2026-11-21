@@ -987,6 +987,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mi Gato">
+<script>
+(function(){function show(m){var d=document.getElementById('dbg');if(!d){d=document.createElement('div');d.id='dbg';d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b00020;color:#fff;font:12px monospace;padding:6px 10px;white-space:pre-wrap';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d);}d.textContent+=m+'\n';}
+window.addEventListener('error',function(e){show('Error: '+(e.message||'?')+' (línea '+(e.lineno||'?')+')');});
+window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.reason&&e.reason.message)||e.reason));});})();
+</script>
 </head>
 <body>
 <main>
@@ -2497,9 +2502,20 @@
   let nativeP = null;
   function startNative() {
     watching = 'native';
+    let n = 0, fell = false;
+    $('msg').textContent = 'Iniciando GPS…';
+    const fallback = function (why) {
+      if (fell || watching !== 'native') return;
+      fell = true;
+      $('msg').textContent = 'GPS nativo sin respuesta (' + why + '). Probando el GPS normal…';
+      try { if (nativeP) nativeP.then(function (id) { BG.removeWatcher({ id: id }); }).catch(function () {}); } catch (e) {}
+      nativeP = null;
+      watching = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 2000 });
+    };
     nativeP = BG.addWatcher(
       { backgroundTitle: 'Mi Gato', backgroundMessage: 'Mochi está contando tu recorrido', requestPermissions: true, stale: false, distanceFilter: 3 },
       function (loc, err) {
+        n++;
         if (err) {
           if (err.code === 'NOT_AUTHORIZED' && confirm('Mi Gato necesita permiso de ubicación (ideal: «Permitir siempre»). ¿Abrir los ajustes?')) BG.openSettings();
           onErr({ code: err.code === 'NOT_AUTHORIZED' ? 1 : 2 });
@@ -2508,7 +2524,10 @@
         onPos({ coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy || 20 } });
       }
     );
+    nativeP.catch(function (e) { fallback('error: ' + ((e && e.message) || e)); });
+    setTimeout(function () { if (n === 0) fallback('sin datos en 10 s'); }, 10000);
   }
+
   function start() {
     if (!NATIVE && !navigator.geolocation) {
       setGps('err', 'Sin GPS en este navegador');
@@ -2532,7 +2551,7 @@
   }
   function stop() {
     if (watching !== null) {
-      if (NATIVE) { const p = nativeP; nativeP = null; if (p) p.then(function (id) { BG.removeWatcher({ id: id }); }); }
+      if (NATIVE && watching === 'native') { const p = nativeP; nativeP = null; if (p) p.then(function (id) { BG.removeWatcher({ id: id }); }); }
       else navigator.geolocation.clearWatch(watching);
     }
     watching = null;
