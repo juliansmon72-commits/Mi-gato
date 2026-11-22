@@ -3,5 +3,13 @@
   "appName": "Mi Gato",
   "webDir": "www",
   "backgroundColor": "#fdeee9",
-  "server": { "androidScheme": "https" }
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#F27D84"
+    }
+  }
 }
