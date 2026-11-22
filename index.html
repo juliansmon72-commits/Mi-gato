@@ -423,6 +423,10 @@
     opacity: 1;
     transform: translateY(0px) scale(1);
   }
+  .cat-svg .rig-plato-f { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+  .cat-svg[data-state="comer"] .rig-plato-f { opacity: 1; }
+  .cat-svg[data-state="comer"] .eye-open { opacity: 0; }
+  .cat-svg[data-state="comer"] .eye-happy { opacity: 1; }
   .cat-svg[data-state="comer"] .mouth-normal { opacity: 0; }
   .cat-svg[data-state="comer"] .mouth-eat { opacity: 1; }
   .cat-svg[data-state="comer"] .rig-cuerpo { transform: translate(3px, 2px) rotate(3deg); }
@@ -430,8 +434,8 @@
   .cat-svg[data-state="comer"] .rig-boca { animation: eat-chew 0.28s ease-in-out infinite alternate; }
   .cat-svg[data-state="comer"] .rig-cola { animation: eat-tail 0.75s ease-in-out infinite alternate; }
   @keyframes eat-head {
-    0% { transform: translate(11px, 28px) rotate(18deg); }
-    100% { transform: translate(13px, 33px) rotate(22deg); }
+    0% { transform: translate(-2px, 24px) rotate(12deg); }
+    100% { transform: translate(-1px, 28px) rotate(15deg); }
   }
   @keyframes eat-chew {
     0% { transform: scaleY(0.85); }
@@ -982,6 +986,20 @@
   }
 .walk{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer}
   .walk .wi{flex:1}.walk small{display:block;color:var(--mute)}
+  .lvlup{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:20px}
+  .lvlup.open{display:flex}
+  #confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .lvbox{position:relative;background:var(--card);border:2px solid var(--bd);border-radius:28px;padding:26px 22px 20px;max-width:340px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;animation:lvpop .55s cubic-bezier(.3,1.6,.5,1) both}
+  @keyframes lvpop{from{transform:scale(.4);opacity:0}}
+  .lvbox h2{margin:0;font-size:1.4rem}
+  .lvbox .lvn{font-size:3.2rem;font-weight:700;color:var(--ac);line-height:1}
+  .lvbox .lvr{color:var(--mute);margin-bottom:4px}
+  .lvbox .reward{display:flex;align-items:center;gap:10px;background:var(--sel);border-radius:99px;padding:8px 20px;font-weight:600;font-size:1.1rem;margin:8px 0 12px}
+  .lvbox .reward svg{width:34px;height:34px;animation:coinspin 1.6s ease-in-out infinite}
+  @keyframes coinspin{50%{transform:rotateY(180deg) scale(1.15)}}
+  @media (prefers-reduced-motion:reduce){.lvbox,.lvbox .reward svg{animation:none}}
+  .mdone{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:24px}
+  .mdone .ic{font-size:2.6rem;color:var(--ac)}.mdone small{color:var(--mute)}
   </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#fdeee9">
@@ -1148,6 +1166,9 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   <div class="two">
     <button class="soft" id="sndtoggle2"><span class="ic" data-ic="vol"></span><span id="sndlbl">Sonido: ON</span></button>
     <button class="soft" id="sndtest"><span>🔊</span>Probar sonido</button>
+    <button class="soft" id="musbtn"><span class="ic" data-ic="vol"></span><span id="muslbl">Música: ON</span></button>
+    <button class="soft" id="xpbtn"><span>⭐</span>Probar festejo: +500 XP</button>
+    <button class="soft" id="rembtn"><span>🔔</span><span id="remlbl">Recordatorios: ON</span></button>
   </div>
 
   <b style="margin-top:6px">Tema visual</b>
@@ -1155,6 +1176,18 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   <p class="mute" style="margin-top:8px">Mi Gato · tu mascota que crece con tus pasos y hábitos 🐾</p>
 </section>
 </main>
+
+<!-- Aviso de subida de nivel -->
+<div class="lvlup" id="lvlup" role="dialog" aria-modal="true" aria-label="Subiste de nivel">
+  <canvas id="confetti"></canvas>
+  <div class="lvbox">
+    <h2>¡Subiste de nivel!</h2>
+    <div class="lvn" id="lv-n">Nivel 2</div>
+    <div class="lvr" id="lv-rank"></div>
+    <div class="reward"><span class="ic" id="lv-gem"></span><span>+1 gema</span></div>
+    <button class="big" id="lv-ok">¡Genial!</button>
+  </div>
+</div>
 
 <!-- Modal de confirmación propio (sin alert/confirm) -->
 <div class="modal-bg" id="modal">
@@ -1446,6 +1479,12 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     catLevels: { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 },
     home: { bed: 'rosa', deco: 'planta', mueble: 'cama', piso: 'madera' },
     walks: [],
+    custom: [],
+    customDone: {},
+    music: true,
+    remind: true,
+    lvlShown: 0,
+    eWake: '',
     scBase: null,
     stepAcc: 0,
     name: 'Yuyi'
@@ -1463,12 +1502,15 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       if (!s.catLevels) s.catLevels = { yuyi: 1, nube: 1, sombra: 1, copito: 1, mochi: 1, bigotes: 1 };
       if (!s.home.piso) s.home.piso = 'madera';
       if (!Array.isArray(s.walks)) s.walks = [];
+      if (!Array.isArray(s.custom)) s.custom = [];
+      if (!s.customDone) s.customDone = {};
     }
     route = JSON.parse(localStorage.getItem(KEY + '-r')) || [];
   } catch (e) {}
 
   const $ = (i) => document.getElementById(i);
   let watching = null, last = null, session = 0, sessionSteps = 0, accM = 0, lastGpsMove = 0;
+  let lvT = 0, cfRAF = 0, mForm = false, mPer = 'd', mTxt = '';
   let sessionStartT = 0, scOk = false, scBusy = false, scLast = 0, scWarned = false, wKey = '', accCount = 0;
   let motionOn = false, above = false, lastStep = 0, lastMin = -1, gv = 9.8, gpsState = 'off';
   let cur = 'inicio', aN = 1, mT = 'd', hK = 'mueble';
@@ -1494,14 +1536,30 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
   }
 
+  function energyClock() {
+    const d = new Date(), h = d.getHours() + d.getMinutes() / 60, key = dk(d);
+    if (h >= 7 && h < 22) {
+      if (s.eWake !== key) {
+        s.eWake = key;
+        s.energy = 100;
+        if (s.t) setTimeout(function () { say('¡Buen día! Tu gato descansó y tiene toda la energía'); }, 1500);
+      }
+      const cap = 100 - (h - 7) / 15 * 80;
+      if (s.energy > cap) s.energy = cap;
+    } else if (s.energy > 20) {
+      s.energy = 20;
+    }
+    s.energy = Math.max(10, s.energy);
+  }
+
   function decay() {
     const n = Date.now();
     const hrs = (n - s.t) / 3600000;
     if (hrs > 0) {
       s.full = Math.max(0, s.full - hrs * 4.2);
       s.mood = Math.max(15, s.mood - hrs * 2.5);
-      s.energy = Math.min(100, Math.max(20, s.energy + hrs * 3.0));
     }
+    energyClock();
     s.t = n;
   }
 
@@ -1530,19 +1588,87 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     const newLvl = Math.floor(s.xp / 500) + 1;
     s.catLevels[s.cat] = newLvl;
     if (newLvl > oldLvl) {
+      s.lvlShown = newLvl;
       s.gems++;
       SFX.win();
-      say('🎉 ¡Subiste a Nivel ' + newLvl + '! +1 gema');
+      showLevelUp(newLvl);
     }
   }
+
+  function checkLevelUp() {
+    const lvl = Math.floor(s.xp / 500) + 1;
+    if (!s.lvlShown) { s.lvlShown = lvl; return; }
+    if (lvl > s.lvlShown) {
+      s.lvlShown = lvl;
+      if (!$('lvlup').classList.contains('open')) showLevelUp(lvl);
+    }
+  }
+
+  function showLevelUp(lvl) {
+    $('lv-n').textContent = 'Nivel ' + lvl;
+    $('lv-rank').textContent = RANGOS[Math.min(RANGOS.length - 1, lvl - 1)];
+    $('lv-gem').innerHTML = ic('gem');
+    $('lvlup').classList.add('open');
+    startConfetti();
+    clearTimeout(lvT);
+    lvT = setTimeout(closeLevelUp, 9000);
+  }
+  function closeLevelUp() {
+    clearTimeout(lvT);
+    $('lvlup').classList.remove('open');
+    cancelAnimationFrame(cfRAF);
+  }
+  function startConfetti() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cv = $('confetti'), cx = cv.getContext('2d');
+    const W = cv.width = window.innerWidth, H = cv.height = window.innerHeight;
+    const cols = ['#f27d84', '#f7a23b', '#ffc93c', '#7fc8a9', '#6ec1e4', '#a66ee8', '#ffffff'];
+    const parts = [];
+    for (let i = 0; i < 150; i++) {
+      parts.push({
+        x: Math.random() * W, y: -20 - Math.random() * H * 0.7,
+        vx: (Math.random() - 0.5) * 2.4, vy: 2 + Math.random() * 3.5,
+        r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3,
+        w: 6 + Math.random() * 7, h: 4 + Math.random() * 6,
+        c: cols[i % cols.length], k: i % 10 === 0 ? 'coin' : (i % 25 === 0 ? 'gem' : 'rect')
+      });
+    }
+    const t0 = performance.now();
+    cancelAnimationFrame(cfRAF);
+    (function frame(t) {
+      cx.clearRect(0, 0, W, H);
+      parts.forEach((p) => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.012; p.r += p.vr;
+        cx.save();
+        cx.translate(p.x, p.y);
+        if (p.k === 'coin') {
+          cx.scale(Math.cos(p.r), 1);
+          cx.fillStyle = '#f7a23b'; cx.beginPath(); cx.arc(0, 0, 10, 0, 6.29); cx.fill();
+          cx.strokeStyle = '#fff'; cx.lineWidth = 1.6; cx.beginPath(); cx.arc(0, 0, 6, 0, 6.29); cx.stroke();
+        } else if (p.k === 'gem') {
+          cx.rotate(p.r * 0.3);
+          cx.fillStyle = '#a66ee8'; cx.beginPath(); cx.moveTo(0, -11); cx.lineTo(10, 0); cx.lineTo(0, 11); cx.lineTo(-10, 0); cx.closePath(); cx.fill();
+        } else {
+          cx.rotate(p.r);
+          cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        cx.restore();
+      });
+      if (t - t0 < 7000) cfRAF = requestAnimationFrame(frame);
+      else cx.clearRect(0, 0, W, H);
+    })(t0);
+  }
+  $('lv-ok').onclick = function () { SFX.tap(); closeLevelUp(); };
 
   function checkGoal() {
     if (s.daySteps >= GOAL && s.goalDay !== s.day) {
       s.goalDay = s.day;
+      s.claimed.steps = true;
       s.gems++;
+      s.coins += 50;
       addXp(100);
       SFX.win();
-      say('¡Objetivo de 5.000 pasos! +1 gema y +100 XP');
+      say('¡Objetivo de 5.000 pasos! +50 monedas, +1 gema y +100 XP');
     }
   }
 
@@ -1646,6 +1772,10 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
              '<path d="M0 195 H320 M0 212 H320 M80 178 V195 M200 178 V195 M135 195 V212 M260 195 V212" stroke="#383c47" stroke-width="2" opacity="0.6"/>';
     }
 
+    if (opts.deco === 'bosque') {
+      svg += '<g opacity="0.65"><path d="M0 178 L38 112 L76 178Z M244 178 L282 110 L320 178Z" fill="#6f8772"/></g>';
+    }
+
     /* 2. VENTANA DE FONDO (adaptada al tema día/noche) */
     svg += '<g>' +
       '<path d="M74 118 V62 a26 26 0 0 1 52 0 V118z" fill="var(--win-sky)" stroke="var(--win-frame)" stroke-width="4.5"/>' +
@@ -1662,9 +1792,10 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
         '<ellipse cx="222" cy="60" rx="6" ry="15" fill="#7fa56a" transform="rotate(-24 222 60)"/>' +
         '<ellipse cx="236" cy="64" rx="6" ry="17" fill="#93b87b" transform="rotate(14 236 64)"/>' +
         '<ellipse cx="252" cy="59" rx="6" ry="15" fill="#7fa56a" transform="rotate(30 252 59)"/>' +
+        '<g' + (opts.mueble === 'sillon' ? ' transform="translate(-12 0)"' : '') + '>' +
         '<rect x="18" y="140" width="28" height="38" rx="5" fill="#d9b99b"/>' +
         '<ellipse cx="25" cy="116" rx="11" ry="26" fill="#7fa56a" transform="rotate(-22 25 116)"/>' +
-        '<ellipse cx="43" cy="112" rx="10" ry="24" fill="#93b87b" transform="rotate(20 43 112)"/>' +
+        '<ellipse cx="43" cy="112" rx="10" ry="24" fill="#93b87b" transform="rotate(20 43 112)"/></g>' +
       '</g>';
     } else if (opts.deco === 'cuadro') {
       svg += '<g>' +
@@ -1672,34 +1803,34 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
         '<circle cx="43" cy="78" r="5.5" fill="#f27ca6"/>' +
         '<circle cx="36" cy="70" r="2.4" fill="#f27ca6"/><circle cx="43" cy="67" r="2.4" fill="#f27ca6"/><circle cx="50" cy="70" r="2.4" fill="#f27ca6"/>' +
       '</g>';
+    } else if (opts.deco === 'farol' && opts.mueble === 'sillon') {
+      svg += '<g><circle cx="282" cy="72" r="26" fill="#ffe082" opacity="0.22"/>' +
+        '<rect x="276" y="78" width="12" height="6" rx="2" fill="#8c6239"/>' +
+        '<path d="M270 78 l5 -20 h14 l5 20z" fill="#ffd97d"/></g>';
     } else if (opts.deco === 'farol') {
-      svg += '<g>' +
+      svg += '<g' + ((opts.mueble === 'casita' || opts.mueble === 'rascador') ? ' transform="translate(-246 0)"' : '') + '>' +
         '<circle cx="282" cy="108" r="32" fill="#ffe082" opacity="0.22"/>' +
         '<rect x="278" y="122" width="8" height="56" rx="3" fill="#a67c52"/>' +
         '<rect x="266" y="174" width="32" height="6" rx="3" fill="#8c6239"/>' +
         '<path d="M262 122 l8 -28 h24 l8 28z" fill="#ffd97d"/>' +
       '</g>';
-    } else if (opts.deco === 'bosque') {
-      svg += '<g opacity="0.65">' +
-        '<path d="M0 178 L46 98 L92 178Z M228 178 L274 96 L320 178Z" fill="#6f8772"/>' +
-      '</g>';
     } else if (opts.deco === 'luces') {
       svg += '<g>' +
         '<path d="M12 24 Q85 52 160 24 T308 24" fill="none" stroke="#a992c2" stroke-width="2"/>' +
-        '<circle cx="52" cy="37" r="5" fill="#ffd166"/><circle cx="112" cy="40" r="5" fill="#ff8fab"/>' +
-        '<circle cx="174" cy="28" r="5" fill="#ffd166"/><circle cx="236" cy="36" r="5" fill="#8ecae6"/>' +
+        '<circle cx="40" cy="36" r="5" fill="#ffd166"/><circle cx="150" cy="27" r="5" fill="#ff8fab"/>' +
+        '<circle cx="200" cy="32" r="5" fill="#ffd166"/><circle cx="262" cy="30" r="5" fill="#8ecae6"/>' +
       '</g>';
     }
 
     /* 4. MUEBLE SELECCIONADO EN MI HOGAR */
     if (opts.mueble === 'casita') {
-      svg += '<g>' +
+      svg += '<g transform="translate(310 178) scale(0.78) translate(-310 -178)">' +
         '<path d="M222 178 V124 L262 94 L302 124 V178 Z" fill="#c99a63"/>' +
         '<path d="M214 128 L262 88 L310 128" fill="none" stroke="#8f633e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
         '<path d="M244 178 V146 a18 18 0 0 1 36 0 V178 Z" fill="#4a3222"/>' +
       '</g>';
     } else if (opts.mueble === 'rascador') {
-      svg += '<g>' +
+      svg += '<g transform="translate(302 180) scale(0.85) translate(-302 -180)">' +
         '<rect x="242" y="170" width="60" height="10" rx="5" fill="#b5895a"/>' +
         '<rect x="264" y="102" width="16" height="70" rx="4" fill="#d9b382"/>' +
         '<rect x="244" y="94" width="56" height="12" rx="6" fill="#c99a63"/>' +
@@ -1718,14 +1849,14 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
            '<ellipse cx="158" cy="187" rx="104" ry="16" fill="#ffffff" opacity="0.22"/>';
 
     /* 6. PLATO DE COMIDA (visible en estado 'comer') */
-    svg += '<g id="' + uid + '-plato" class="rig-plato">' +
-      '<ellipse cx="268" cy="196" rx="28" ry="6.5" fill="#000" opacity="0.16"/>' +
-      '<circle cx="260" cy="182" r="4.2" fill="var(--kibble)"/>' +
-      '<circle cx="268" cy="180" r="4.8" fill="#b36834"/>' +
-      '<circle cx="276" cy="182" r="4.2" fill="var(--kibble)"/>' +
-      '<path d="M244 183 H292 L286 195 Q268 199 250 195 Z" fill="var(--bowl)"/>' +
-      '<ellipse cx="268" cy="183" rx="24" ry="4.2" fill="var(--bowl-dark)"/>' +
-    '</g>';
+    svg += '<g id="' + uid + '-plato" class="rig-plato"><g transform="translate(-4 9)">' +
+      '<ellipse cx="232" cy="197" rx="30" ry="6.5" fill="#000" opacity="0.16"/>' +
+      '<path d="M208 183 H256 L250 195 Q232 199 214 195 Z" fill="var(--bowl)"/>' +
+      '<ellipse cx="232" cy="183" rx="24" ry="4.2" fill="var(--bowl-dark)"/>' +
+      '<circle cx="224" cy="181" r="4.2" fill="var(--kibble)"/>' +
+      '<circle cx="232" cy="179" r="4.8" fill="#b36834"/>' +
+      '<circle cx="240" cy="181" r="4.2" fill="var(--kibble)"/>' +
+    '</g></g>';
 
     /* ========================================================================
        RIG DEL GATITO (8 GRUPOS INDEPENDIENTES)
@@ -1745,15 +1876,13 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
         '<path d="M46 136 Q54 116 80 126" fill="none" stroke="' + c.p1 + '" stroke-width="21" stroke-linecap="round"/>' +
       '</g>';
 
-      /* GRUPO 2 y 4 (Parte caminando): 4 PATAS CORTAS INTEGRADAS AL CUERPO */
+      /* PATAS IZQUIERDAS (detrás del cuerpo) */
       svg += '<g class="paws-walk">' +
         '<g id="' + uid + '-patas-traseras" class="rig-part rig-patas-traseras">' +
           '<g class="rig-part rig-pata pata-ti"><rect x="86" y="176" width="21" height="32" rx="10.5" fill="' + c.furShadow + '"/></g>' +
-          '<g class="rig-part rig-pata pata-td"><rect x="108" y="178" width="22" height="32" rx="11" fill="' + c.fur + '"/></g>' +
         '</g>' +
         '<g id="' + uid + '-patas-delanteras" class="rig-part rig-patas-delanteras">' +
           '<g class="rig-part rig-pata pata-di"><rect x="166" y="176" width="21" height="32" rx="10.5" fill="' + c.furShadow + '"/></g>' +
-          '<g class="rig-part rig-pata pata-dd"><rect x="188" y="178" width="22" height="32" rx="11" fill="' + c.fur + '"/></g>' +
         '</g>' +
       '</g>';
 
@@ -1771,6 +1900,16 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       svg += '<g class="paws-rest">' +
         '<ellipse cx="178" cy="183" rx="19" ry="10.5" fill="' + c.face + '"/>' +
         '<ellipse cx="220" cy="184" rx="19" ry="10.5" fill="' + c.face + '"/>' +
+      '</g>';
+
+      /* PATAS DERECHAS (por delante del cuerpo) */
+      svg += '<g class="paws-walk">' +
+        '<g id="' + uid + '-patas-traseras-f" class="rig-part rig-patas-traseras">' +
+          '<g class="rig-part rig-pata pata-td"><rect x="108" y="178" width="22" height="32" rx="11" fill="' + c.fur + '" stroke="' + c.furShadow + '" stroke-width="1.5"/></g>' +
+        '</g>' +
+        '<g id="' + uid + '-patas-delanteras-f" class="rig-part rig-patas-delanteras">' +
+          '<g class="rig-part rig-pata pata-dd"><rect x="188" y="178" width="22" height="32" rx="11" fill="' + c.fur + '" stroke="' + c.furShadow + '" stroke-width="1.5"/></g>' +
+        '</g>' +
       '</g>';
 
       /* GRUPO 5: CABEZA REDONDEADA + SUBGRUPOS FACIALES */
@@ -1843,6 +1982,12 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       svg += '</g>'; // fin rig-cabeza
     svg += '</g>'; // fin rig-root
 
+    /* Borde delantero del plato (por delante de la cabeza al comer) */
+    svg += '<g class="rig-plato-f"><g transform="translate(-4 9)">' +
+      '<path d="M208.5 186 H255.5 L250 195 Q232 199 214 195 Z" fill="var(--bowl)"/>' +
+      '<path d="M208 183.5 Q232 188.5 256 183.5" fill="none" stroke="var(--bowl-dark)" stroke-width="2.4" stroke-linecap="round"/>' +
+    '</g></g>';
+
     /* Letras z Z flotando al dormir */
     svg += '<g class="zzz-group" fill="var(--mute)" font-weight="600">' +
       '<text class="z1" x="242" y="114" font-size="16">z</text>' +
@@ -1879,6 +2024,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
 
   /* ---- 1. RENDER GENERAL ---- */
   function render() {
+    checkLevelUp();
     decay();
     rollDay();
     const f = Math.round(s.full);
@@ -1977,34 +2123,76 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
     '</div>';
   }
 
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); }
+  function dailyPick() {
+    let h = 7; const k = s.day || '';
+    for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+    const idx = [1, 2, 3, 4, 5, 6];
+    for (let i = idx.length - 1; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); const t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+    return new Set([0].concat(idx.slice(0, 4)));
+  }
+  function perKey(per) {
+    const d = new Date();
+    if (per === 'd') return s.day;
+    if (per === 'm') return d.getFullYear() + '-' + (d.getMonth() + 1);
+    return 'w' + d.getFullYear() + '-' + Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 6048e5);
+  }
+  function cList(pers) { return s.custom.filter(function (c) { return pers.indexOf(c.per) > -1; }); }
+  function cIsDone(c) { return s.customDone[c.id] === perKey(c.per); }
+  const PERL = { d: 'Diaria', w: 'Semanal', m: 'Mensual' };
+  function customBlock(pers) {
+    let h = cList(pers).filter(function (c) { return !cIsDone(c); }).map(function (c) {
+      return '<div class="card mrow"><span class="ic">' + ic('star') + '</span><div class="mbody"><div class="mtitle"><b>' + esc(c.text) + '</b><span>' + PERL[c.per] + ' · +20 XP</span></div></div>' +
+        '<button class="mplus" data-cdel="' + c.id + '" aria-label="Borrar misión">' + ic('trash') + '</button>' +
+        '<button class="mchk" data-cdone="' + c.id + '" aria-label="Completar">' + ic('ok') + '</button></div>';
+    }).join('');
+    if (mForm) {
+      h += '<div class="card" style="display:flex;flex-direction:column;gap:8px"><input id="cmText" maxlength="40" placeholder="Escribí tu misión" value="' + esc(mTxt) + '">' +
+        '<div style="display:flex;gap:6px">' + ['d', 'w', 'm'].map(function (k) { return '<button class="soft" data-per="' + k + '" style="padding:8px;font-size:.9rem;' + (mPer === k ? 'outline:2px solid var(--ac)' : '') + '">' + PERL[k] + '</button>'; }).join('') + '</div>' +
+        '<div class="two"><button class="soft" id="cmCancel">Cancelar</button><button class="big" id="cmSave">Guardar</button></div></div>';
+    } else {
+      h += '<button class="soft" id="cmNew">+ Nueva misión propia</button>';
+    }
+    return h;
+  }
+
   function renderMs() {
+    if (mForm && document.activeElement && document.activeElement.id === 'cmText') return;
     let h = '';
     if (mT === 'd') {
-      h += autoMissionRow('steps', 'Caminar 5.000 pasos', '+50 🪙 · +100 XP', s.daySteps, GOAL, nf(s.daySteps) + ' / 5.000');
-      h += autoMissionRow('game', 'Jugar con tu gato 3 veces', '+30 XP', s.plays, 3, Math.min(3, s.plays) + ' / 3');
-      h += autoMissionRow('bowl', 'Alimentar a tu gato 3 veces', '+20 🪙 · +30 XP', s.feeds, 3, Math.min(3, s.feeds) + ' / 3');
-
-      h += habitRow('read', 'book', 'Leer 15 minutos', s.habits.read ? '15 / 15 min' : '0 / 15 min', s.habits.read);
-      h += habitRow('workout', 'gym', 'Entrenar 30 minutos', s.habits.workout ? '30 / 30 min' : '0 / 30 min', s.habits.workout);
-
       const wDone = s.habits.water >= 8;
-      const wPct = Math.min(100, Math.round(s.habits.water / 8 * 100));
-      h += '<div class="card mrow">' +
-        '<span class="ic">' + ic('drop') + '</span>' +
-        '<div class="mbody">' +
-          '<div class="mtitle"><b>Tomar agua (8 vasos)</b><span>+15 🪙 · +30 XP</span></div>' +
-          '<div class="trk"><i style="width:' + wPct + '%"></i></div>' +
-          '<div class="msub"><span>' + s.habits.water + ' / 8 vasos</span></div>' +
-        '</div>' +
-        (!wDone ? '<button class="mplus" data-water="1">+1 vaso</button>' : '') +
-        '<button class="mchk' + (wDone ? ' done' : '') + '" data-habit="water" aria-label="Completar agua">' + ic('ok') + '</button>' +
-      '</div>';
-
-      h += habitRow('sleep', 'bed', 'Dormir bien (≥ 7 horas)', s.habits.sleep ? '7 / 7 horas' : 'Pendiente', s.habits.sleep);
+      const ck = [s.daySteps >= GOAL, s.plays >= 3, s.feeds >= 3, !!s.habits.read, !!s.habits.workout, wDone, !!s.habits.sleep];
+      const act = dailyPick(), on = function (i) { return act.has(i); };
+      const cd = cList(['d']), cdn = cd.filter(cIsDone).length;
+      const nDone = ck.filter(function (v, i) { return v && on(i); }).length + cdn, total = act.size + cd.length;
+      if (on(0) && !ck[0]) h += autoMissionRow('steps', 'Caminar 5.000 pasos', '+50 🪙 · +100 XP', s.daySteps, GOAL, nf(s.daySteps) + ' / 5.000');
+      if (on(1) && !ck[1]) h += autoMissionRow('game', 'Jugar con tu gato 3 veces', '+30 XP', s.plays, 3, Math.min(3, s.plays) + ' / 3');
+      if (on(2) && !ck[2]) h += autoMissionRow('bowl', 'Alimentar a tu gato 3 veces', '+20 🪙 · +30 XP', s.feeds, 3, Math.min(3, s.feeds) + ' / 3');
+      if (on(3) && !ck[3]) h += habitRow('read', 'book', 'Leer 15 minutos', '0 / 15 min', false);
+      if (on(4) && !ck[4]) h += habitRow('workout', 'gym', 'Entrenar 30 minutos', '0 / 30 min', false);
+      if (on(5) && !ck[5]) {
+        const wPct = Math.min(100, Math.round(s.habits.water / 8 * 100));
+        h += '<div class="card mrow">' +
+          '<span class="ic">' + ic('drop') + '</span>' +
+          '<div class="mbody">' +
+            '<div class="mtitle"><b>Tomar agua (8 vasos)</b><span>+15 🪙 · +30 XP</span></div>' +
+            '<div class="trk"><i style="width:' + wPct + '%"></i></div>' +
+            '<div class="msub"><span>' + s.habits.water + ' / 8 vasos</span></div>' +
+          '</div>' +
+          '<button class="mplus" data-water="1">+1 vaso</button>' +
+          '<button class="mchk" data-habit="water" aria-label="Completar agua">' + ic('ok') + '</button>' +
+        '</div>';
+      }
+      if (on(6) && !ck[6]) h += habitRow('sleep', 'bed', 'Dormir bien (≥ 7 horas)', 'Pendiente', false);
+      if (nDone === total) h += '<div class="card mdone"><span class="ic">' + ic('ok') + '</span><b>¡Completaste todas las misiones de hoy!</b><small>Mañana hay misiones nuevas.</small></div>';
+      else if (nDone > 0) h += '<p class="mute">Completadas hoy: ' + nDone + ' de ' + total + '</p>';
     } else if (mT === 's') {
       const w = range(7);
-      h += autoMissionRow('steps', 'Caminar 30.000 pasos', 'Semanal', w.st, 30000, nf(w.st) + ' / 30.000');
-      h += autoMissionRow('pin', 'Recorrer 15 km', 'Semanal', w.m, 15000, km(w.m) + ' / 15,0 km');
+      const d1 = w.st >= 30000, d2 = w.m >= 15000;
+      if (!d1) h += autoMissionRow('steps', 'Caminar 30.000 pasos', 'Semanal', w.st, 30000, nf(w.st) + ' / 30.000');
+      if (!d2) h += autoMissionRow('pin', 'Recorrer 15 km', 'Semanal', w.m, 15000, km(w.m) + ' / 15,0 km');
+      if (d1 && d2) h += '<div class="card mdone"><span class="ic">' + ic('ok') + '</span><b>¡Completaste las misiones de la semana!</b><small>Se renuevan solas.</small></div>';
+      else if (d1 || d2) h += '<p class="mute">Completadas: 1 de 2</p>';
     } else if (mT === 'l') {
       const lvl = Math.floor(s.xp / 500) + 1;
       const xpInLvl = s.xp % 500;
@@ -2038,9 +2226,39 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
         '</div>';
       });
     }
+    if (mT === 'd') h += customBlock(['d']);
+    else if (mT === 's') h += customBlock(['w', 'm']);
     $('mlist').innerHTML = h;
   }
 
+  $('mlist').addEventListener('click', function (e) {
+    const t = e.target;
+    const keep = function () { const i = $('cmText'); if (i) mTxt = i.value; };
+    if (t.closest('#cmNew')) { mForm = true; mPer = mT === 's' ? 'w' : 'd'; mTxt = ''; renderMs(); return; }
+    if (t.closest('#cmCancel')) { mForm = false; renderMs(); return; }
+    const pb = t.closest('[data-per]');
+    if (pb) { keep(); mPer = pb.dataset.per; renderMs(); return; }
+    if (t.closest('#cmSave')) {
+      keep();
+      const txt = mTxt.trim();
+      if (!txt) { say('Escribí algo para tu misión'); return; }
+      s.custom.push({ id: Date.now(), text: txt, per: mPer });
+      mForm = false; mTxt = '';
+      save(); SFX.win(); say('Misión creada');
+      const want = mPer === 'd' ? 'd' : 's';
+      if (mT !== want) { const b = $('mseg').querySelector('[data-m="' + want + '"]'); if (b) { b.click(); return; } }
+      renderMs();
+      return;
+    }
+    const dn = t.closest('[data-cdone]');
+    if (dn) {
+      const c = s.custom.find(function (x) { return String(x.id) === dn.dataset.cdone; });
+      if (c) { s.customDone[c.id] = perKey(c.per); s.coins += 10; addXp(20); SFX.win(); say('¡Misión cumplida! +10 monedas y +20 XP'); save(); renderMs(); render(); }
+      return;
+    }
+    const dl = t.closest('[data-cdel]');
+    if (dl && confirm('¿Borrar esta misión?')) { s.custom = s.custom.filter(function (x) { return String(x.id) !== dl.dataset.cdel; }); save(); renderMs(); }
+  });
   $('mlist').onclick = function (e) {
     const wb = e.target.closest('[data-water]');
     if (wb) {
@@ -2211,7 +2429,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       renderCats();
       SFX.win();
       setCatState('feliz', 3000);
-      say('¡' + c.name + ' se unió a tu familia! 🎉');
+      say('¡' + c.name + ' se unió a tu familia!');
     }
     pendingCat = null;
   };
@@ -2316,6 +2534,112 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       say('Sonido silenciado 🔇');
     }
   }
+
+  /* ---- MÚSICA DE FONDO (generada en el momento, sin archivos) ---- */
+  const MUS = (function () {
+    let ctx = null, master = null, timer = null, step = 0, nextT = 0, on = false;
+    const CH = [
+      { pad: [130.8, 196, 261.6, 329.6], mel: [523.3, 659.3, 392, 784] },
+      { pad: [110, 164.8, 220, 261.6], mel: [440, 523.3, 659.3, 392] },
+      { pad: [87.3, 130.8, 174.6, 220], mel: [440, 523.3, 349.2, 698.5] },
+      { pad: [98, 146.8, 196, 246.9], mel: [587.3, 493.9, 392, 784] }
+    ];
+    const EIGHTH = 60 / 72 / 2;
+    function note(f, t, dur, gain, type) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    function schedule() {
+      while (nextT < ctx.currentTime + 0.6) {
+        const ch = CH[Math.floor(step / 8) % 4];
+        if (step % 8 === 0) ch.pad.forEach(function (f) { note(f, nextT, EIGHTH * 8, 0.035, 'triangle'); });
+        if (Math.random() < 0.6) note(ch.mel[Math.floor(Math.random() * 4)], nextT, EIGHTH * 3, 0.05, 'sine');
+        nextT += EIGHTH; step++;
+      }
+    }
+    function start() {
+      if (on) { if (ctx && ctx.state === 'suspended') ctx.resume(); return; }
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        ctx = new AC(); master = ctx.createGain(); master.gain.value = 0.5;
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+        const dl = ctx.createDelay(1); dl.delayTime.value = 0.42;
+        const fb = ctx.createGain(); fb.gain.value = 0.35;
+        master.connect(lp); lp.connect(ctx.destination); lp.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(ctx.destination);
+      }
+      on = true; ctx.resume(); nextT = ctx.currentTime + 0.1;
+      timer = setInterval(schedule, 250);
+    }
+    function stop() { on = false; clearInterval(timer); if (ctx) ctx.suspend(); }
+    return { start: start, stop: stop };
+  })();
+  $('xpbtn').onclick = function () { addXp(500); save(); render(); };
+  /* ---- El gato interactúa con su entorno ---- */
+  function envLine() {
+    const n = s.name || 'Tu gato', h = new Date().getHours(), o = [];
+    if (s.home.deco === 'planta') o.push(n + ' olfatea la plantita');
+    if (s.home.deco === 'cuadro') o.push(n + ' mira el cuadro con curiosidad');
+    if (s.home.deco === 'farol') o.push(n + ' se queda mirando la lucecita');
+    if (s.home.deco === 'luces') o.push(n + ' sigue las lucecitas con la mirada');
+    if (s.home.mueble === 'casita') o.push(n + ' se asoma a su cucha');
+    if (s.home.mueble === 'rascador') o.push(n + ' se estira en el rascador');
+    if (s.home.mueble === 'sillon') o.push(n + ' amasa el sillón con las patitas');
+    o.push(n + ' mira por la ventana ' + (h >= 7 && h < 19 ? 'y toma sol' : 'y cuenta estrellas'));
+    return o[Math.floor(Math.random() * o.length)];
+  }
+  setInterval(function () {
+    const el = document.querySelector('.cat-svg');
+    if (!el || document.hidden || cur !== 'inicio' || el.dataset.state !== 'idle' || s.energy < 35) return;
+    setCatState('feliz');
+    say(envLine());
+    setTimeout(function () { if (el.dataset.state === 'feliz') setCatState('idle'); }, 3500);
+  }, 40000);
+
+  /* ---- Recordatorios (solo en la app de Android) ---- */
+  const LN = (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() && Capacitor.Plugins) ? Capacitor.Plugins.LocalNotifications : null;
+  const REM = [
+    { id: 101, h: 10, m: 0, t: 'Hora de tomar agua', b: 'Tu gato dice: ¡un vasito de agua!' },
+    { id: 102, h: 13, m: 30, t: 'Un vasito de agua', b: 'Tomar agua también cuenta como mimo para tu cuerpo.' },
+    { id: 103, h: 16, m: 0, t: 'Tomá un poco de agua', b: 'Y de paso estirá las piernas.' },
+    { id: 104, h: 17, m: 30, t: 'Salgamos a caminar', b: 'Siempre es buen momento para estirar las patitas.' },
+    { id: 105, h: 19, m: 0, t: 'Agüita fresca', b: '¿Ya tomaste tus vasos de hoy?' },
+    { id: 106, h: 21, m: 0, t: 'Un ratito de lectura', b: 'Siempre es buen momento para leer un poco.' }
+  ];
+  async function applyReminders(ask) {
+    if (!LN) return;
+    try {
+      await LN.cancel({ notifications: REM.map(function (r) { return { id: r.id }; }) });
+      if (!s.remind) return;
+      let perm = await LN.checkPermissions();
+      if (perm.display !== 'granted' && ask) perm = await LN.requestPermissions();
+      if (perm.display !== 'granted') { if (ask) say('Activá las notificaciones de Mi Gato en los ajustes del celu'); return; }
+      await LN.schedule({ notifications: REM.map(function (r) {
+        return { id: r.id, title: r.t, body: r.b, schedule: { on: { hour: r.h, minute: r.m }, allowWhileIdle: true } };
+      }) });
+    } catch (e) {}
+  }
+  function syncRemUI() { $('remlbl').textContent = 'Recordatorios: ' + (LN ? (s.remind ? 'ON' : 'OFF') : 'solo en la app Android'); }
+  $('rembtn').onclick = function () {
+    if (!LN) { say('Los recordatorios funcionan en la app de Android'); return; }
+    s.remind = !s.remind; save(); syncRemUI(); applyReminders(true);
+    say(s.remind ? 'Recordatorios activados' : 'Recordatorios apagados');
+  };
+  syncRemUI();
+  applyReminders(false);
+
+  function syncMusicUI() { $('muslbl').textContent = 'Música: ' + (s.music ? 'ON' : 'OFF'); }
+  function applyMusic() { if (s.music && !document.hidden) MUS.start(); else MUS.stop(); }
+  $('musbtn').onclick = function () { s.music = !s.music; save(); syncMusicUI(); applyMusic(); say(s.music ? 'Música activada' : 'Música apagada'); };
+  document.addEventListener('click', applyMusic, { once: true });
+  document.addEventListener('visibilitychange', applyMusic);
+  syncMusicUI();
+  try { applyMusic(); } catch (e) {}
 
   $('sndbtn').onclick = toggleSound;
   $('sndtoggle2').onclick = toggleSound;
@@ -2518,7 +2842,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
   /* ---- GPS nativo en segundo plano (solo dentro de la app Android) ---- */
   const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
   const BG = NATIVE ? ((Capacitor.Plugins && Capacitor.Plugins.BackgroundGeolocation) || (typeof Capacitor.registerPlugin === 'function' ? Capacitor.registerPlugin('BackgroundGeolocation') : null)) : null;
-  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v5 · ' + (NATIVE ? 'app' : 'web') + ' · gps ' + (BG ? 'ok' : 'no') + ' · pasos ' + (NATIVE && Capacitor.Plugins && Capacitor.Plugins.StepCounter ? 'ok' : 'no'); document.body.appendChild(d); window.__stampEl = d; })();
+  (function () { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px monospace;color:#888;pointer-events:none'; d.textContent = 'v11 · ' + (NATIVE ? 'app' : 'web') + ' · gps ' + (BG ? 'ok' : 'no') + ' · pasos ' + (NATIVE && Capacitor.Plugins && Capacitor.Plugins.StepCounter ? 'ok' : 'no'); document.body.appendChild(d); window.__stampEl = d; })();
   let nativeP = null;
   const SC = NATIVE && Capacitor.Plugins ? Capacitor.Plugins.StepCounter : null;
   function startNative() {
@@ -2839,7 +3163,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       SFX.win();
       save();
       render();
-      say('¡Misión diaria de juego cumplida! +30 XP 🎉');
+      say('¡Misión diaria de juego cumplida! +30 XP');
       return;
     }
     save();
@@ -2866,7 +3190,7 @@ window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.re
       s.coins += 20;
       addXp(30);
       SFX.win();
-      say('¡Misión diaria de comida! +20 monedas y +30 XP 🎉');
+      say('¡Misión diaria de comida! +20 monedas y +30 XP');
     } else {
       say('¡Ñam ñam! 🥣 +20 XP');
     }

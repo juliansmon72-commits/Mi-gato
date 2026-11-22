@@ -149,3 +149,13 @@ public class MainActivity extends BridgeActivity {
     }
 }
 """)
+
+
+# ---- ícono chico (blanco) para las notificaciones ----
+from PIL import Image as _I, ImageDraw as _D
+ic = _I.new('RGBA', (96, 96), (0, 0, 0, 0)); dr = _D.Draw(ic) if hasattr(_D, 'Draw') else _D.Draw(ic)
+dr.ellipse([14, 38, 34, 62], fill='white'); dr.ellipse([30, 18, 50, 42], fill='white')
+dr.ellipse([46, 18, 66, 42], fill='white'); dr.ellipse([62, 38, 82, 62], fill='white')
+dr.ellipse([26, 50, 70, 86], fill='white')
+os.makedirs('android/app/src/main/res/drawable', exist_ok=True)
+ic.save('android/app/src/main/res/drawable/ic_stat_icon_config_sample.png')
